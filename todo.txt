@@ -15,5 +15,8 @@ Sound
 Relative sizing
 -Screen, etc.
 
+Add polling in case someone quit
+
+Fix collision bug
 
 Testing

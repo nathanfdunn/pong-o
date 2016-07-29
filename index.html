@@ -14,7 +14,16 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-  var myId;     // Can't trust socket.id
+
+  // a hex string
+  function getRandomColor () {
+    var out = '#';
+    for (var i=0; i<6; i++){
+      out += '0123456789abcdef'[Math.floor(Math.random()*16)];
+    }
+    return out;
+  }
+
 
   var lastUpdateTime = (new Date()).getTime();
 
@@ -45,8 +54,8 @@
     others[paddleInfo.playerId] = paddleInfo.paddle;
   });
 
-  socket.on('ball-update', function(ballInfo) {
-    ball.initial = ballInfo;
+  socket.on('ball-update', function(ballSnapshot) {
+    ball.snapshot = ballSnapshot;
   });
 
   function publishPaddleUpdate () {
@@ -54,7 +63,7 @@
       playerId: myId, //socket.id,
       paddle: takePaddleSnapshot()
     };
-    console.log('publishing paddle update: ', updateInfo);
+    // console.log('publishing paddle update: ', updateInfo);
     socket.emit('paddle-update', updateInfo);
   }
 
@@ -98,8 +107,8 @@
     angularAcceleration: 0.001,  // radians per second ^ 2
     maxAngularVelocity: 0.01,   // radians Per 
     radius: 50,
-    color: 'yellow',
-    outlineColor: 'blue',
+    color: getRandomColor(),
+    outlineColor: getRandomColor(),
     // speed: 0.03         // How fast it moves around the track
   };
 
@@ -119,18 +128,6 @@
 
   canvas.width = W;
   canvas.height = H;
-
-  // function rndHex(){
-  //   return '0123456789abcdef'[Math.floor(Math.random()*16)];
-  // }
-
-  // function rndColor () {
-  //   var out = '#';
-  //   for (var i=0; i<6; i++){
-  //     out += rndHex();
-  //   }
-  //   return out;
-  // }
 
   function drawCircle(circle){
     ctx.fillStyle = circle.color;
