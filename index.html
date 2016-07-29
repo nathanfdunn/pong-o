@@ -14,21 +14,12 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
+  var myId;     // Can't trust socket.id
+
   // maps player ids to their paddle objects
   var others = {};
 
   var socket = io();
-
-  // var saved = Object.assign({}, socket);
-
-  // console.log('socket: ', saved);
-  // console.log('socket ID: ', socket.id);
-
-  // var myId = socket.id;
-  // console.log('My ID: ', myId);
-
-  // 
-  var myId;     // Can't trust socket.id
 
   socket.on('initialized', function(initInfo){
     myId = initInfo.yourId;
@@ -36,15 +27,9 @@
     publishPaddleUpdate();
   });
 
-  // // Don't actually have to do anything with this
-  // socket.on('player-connected', function(playerId) {
-  //   console.log('socket '+socket.id+' sees player joined: '+playerId);
-  // });
-
   socket.on('player-disconnected', function(playerId) {
     console.log('socket '+myId+' sees player left: '+playerId);
     delete others[playerId];
-    // console.log('remaining players', others);
     for (var id in others){
       console.log('id: ', id, 'obj: ', others[id]);
     }
@@ -59,20 +44,6 @@
     ball.initial = ballInfo;
   });
 
-
-  // function publishBallUpdate(){
-  //   // var ballInfo = {
-  //   //   time: (new Date()).getTime(),
-  //   //   x: ball.circle.x,
-  //   //   y: ball.circle.y,
-  //   //   vAngle: ball.vAngle,
-  //   //   vMagnitude: ball.vMagnitude
-  //   // };
-  //   // console.log('socket: ', myId, 'publishing ball update: ', ballInfo);
-  //   // socket.emit('ball-update', ballInfo);
-  //   socket.emit('ball-update', ball.snapshot);
-  // }
-
   function publishPaddleUpdate () {
     var updateInfo = {
       playerId: myId, //socket.id,
@@ -82,61 +53,9 @@
     socket.emit('paddle-update', updateInfo);
   }
 
-  // socket.emit('plain-obj', {json:'object'});
-
   var W = 300, H = 300;
 
   var TWO_PI = 2 * Math.PI;
-
-  // function Circle (x, y, radius, color, outlineColor) {
-  //   this.x = x;
-  //   this.y = y;
-  //   this.radius = radius;
-  //   this.color = color;
-  //   this.outlineColor = outlineColor;
-  //   // this.setPos = function (x, y) {
-  //   //   this.x = x;
-  //   //   this.y = y;
-  //   // };
-  // }
-
-
-
-  // function Ball (circleInstance, vAngle, vMagnitude) {
-  //   this.vAngle = vAngle;
-  //   this.vMagnitude = vMagnitude;
-
-  //   this.circle = circleInstance;
-
-  //   // Most recent definitive thingy
-  //   this.initial = {
-  //     time: (new Date()).getTime(),
-  //     x: this.circle.x,
-  //     y: this.circle.y,
-  //     vAngle: this.vAngle,
-  //     vMagnitude: this.vMagnitude
-  //   };
-
-  // }
-
-  // function Paddle (circleInstance, angle, outerRadius) {
-  //   this.circle = circleInstance;
-  //   this.outerRadius = outerRadius;
-
-  //   this.setAngle = function (newAngle) {
-  //     this.angle = newAngle;
-  //     this.circle.x = this.outerRadius * Math.cos(this.angle),
-  //     this.circle.y = this.outerRadius * Math.sin(this.angle)
-  //   }
-
-  //   this.setAngle(angle);
-
-  // }
-
-  // var ball = new Ball(new Circle(0, 0, 20, 'red', 'black'), 10, 0.03);
-
-  // var paddle = new Paddle(new Circle(-100, 100, 50, 'yellow', 'blue'),
-  //   0, 100);
 
   var ball = {
     x: 0,
@@ -187,18 +106,6 @@
     };
   }
 
-  // function takeCircleSn
-
-  // function takePaddleSnapshot() {
-  //   return {
-  //     x:
-  //   }
-  // }
-
-  // socket.emit('paddle-update')
-  // Now that we have our paddle created
-  // publishPaddleUpdate();
-
   var canvas = document.getElementById('canvas');
   var ctx = canvas.getContext('2d');
 
@@ -239,32 +146,19 @@
     ctx.closePath();
 
     for (var id in others){
-      // console.log('drawing others: ', id, others[id]);
       drawCircle(others[id]);
     }
 
     drawCircle(ball);
     drawCircle(paddle);
-
   }
 
   var leftPressed = false;
   var rightPressed = false;
 
-  // var paddleSlowness = 30;
-
-  // function calcDistance(x1, y1, x2, y2) {
-  //   return Math.sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
-  // }
-
-
-
   // TODO don't emit right in this function...?
   // returns true if a collision occurred
   function detectAndResolveCollision(){
-    // var b = ball.circle;
-    // var p = paddle.circle;
-    // var distance = calcDistance(b.x, b.y, p.x, p.y);
     var diffX = paddle.x - ball.x;
     var diffY = paddle.y - ball.y;
 
@@ -286,7 +180,6 @@
       
       if (dot > 0) {    // If ball is moving towards paddle
         var surfaceAngle = Math.PI/2 + Math.atan2(diffY, diffX);
-        // var surfaceAngle = 90 + Math.atan2(diffY, diffX);
         var returnAngle = 2*surfaceAngle - ball.vAngle;
         ball.vAngle = returnAngle;
       }
@@ -294,7 +187,6 @@
     }
     return false;
   }
-
 
   //Simply calculates where the ball is needed
   function update() {
@@ -316,7 +208,6 @@
     var collision = detectAndResolveCollision();
     if (collision){
       ball.snapshot = takeBallSnapshot();
-      // publishBallUpdate();
       socket.emit('ball-update', ball.snapshot);
     }
   }
@@ -325,7 +216,6 @@
     update();
     redraw();
   }, 30)
-
 
   $(document).keydown(function(e){
     if (e.which === 37) {         // left arrow
@@ -343,7 +233,6 @@
     }
   });
 
-  // $(document.mouse)
 </script>
 
 </html>
