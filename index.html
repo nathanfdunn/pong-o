@@ -35,6 +35,8 @@
   var DELAY = 30;         // milliseconds to wait
   // var FPS = 1000 / DELAY; // How many updates per second
 
+  var myId;
+
   socket.on('initialized', function(initInfo){
     myId = initInfo.yourId;
     others = initInfo.otherPaddles;
