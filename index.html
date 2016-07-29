@@ -56,11 +56,21 @@
   });
 
   socket.on('ball-update', function(ballInfo) {
-    ball.circle = ballInfo.circle;
-    ball.vAngle = ballInfo.vAngle;
-    ball.vMagnitude = ballInfo.vMagnitude;
+    ball.initial = ballInfo;
   });
 
+
+  function publishBallUpdate(){
+    var ballInfo = {
+      time: (new Date()).getTime(),
+      x: ball.circle.x,
+      y: ball.circle.y,
+      vAngle: ball.vAngle,
+      vMagnitude: ball.vMagnitude
+    };
+    console.log('socket: ', myId, 'publishing ball update: ', ballInfo);
+    socket.emit('ball-update', ballInfo);
+  }
 
   function publishPaddleUpdate () {
     var updateInfo = {
@@ -70,12 +80,6 @@
     console.log('publishing paddle update: ', updateInfo);
     socket.emit('paddle-update', updateInfo);
   }
-
-  function publishBallUpdate () {
-
-  }
-
-
 
   // socket.emit('plain-obj', {json:'object'});
 
@@ -89,24 +93,10 @@
     this.radius = radius;
     this.color = color;
     this.outlineColor = outlineColor;
-    // this.draw = function (ctx) {
-    //   ctx.fillStyle = this.color;
-    //   // Offset so origin is at center
-    //   ctx.beginPath()
-    //   ctx.arc(this.x + W/2, this.y + H/2, this.radius, 0, TWO_PI, false);
-    //   ctx.fill();
-    //   ctx.lineWidth = 5;
-    //   ctx.strokeStyle = this.outlineColor;
-    //   // ctx.strokeStyle = rndColor();
-    //   // ctx.strokeStyle = '#ff00ff';
-    //   ctx.stroke();
-    //   ctx.closePath();
-
+    // this.setPos = function (x, y) {
+    //   this.x = x;
+    //   this.y = y;
     // };
-    this.setPos = function (x, y) {
-      this.x = x;
-      this.y = y;
-    };
   }
 
 
@@ -115,23 +105,17 @@
     this.vAngle = vAngle;
     this.vMagnitude = vMagnitude;
 
-    // this.vx = vx;
-    // this.vy = vy;
     this.circle = circleInstance;
-    this.update = function(dt) {
-      var newX = this.circle.x + this.vMagnitude * Math.cos(this.vAngle) * dt;
-      var newY = this.circle.y + this.vMagnitude * Math.sin(this.vAngle) * dt;
-      this.circle.x = newX;
-      this.circle.y = newY;
-      // this.circle.setPos(
-      //   this.circle.x + this.vMagnitude * Math.cos(this.vAngle) * dt,
-      //   this.circle.y + this.vMagnitude * Math.sin(this.vAngle) * dt
-      // );
+
+    // Most recent definitive thingy
+    this.initial = {
+      time: (new Date()).getTime(),
+      x: this.circle.x,
+      y: this.circle.y,
+      vAngle: this.vAngle,
+      vMagnitude: this.vMagnitude
     };
-    // this.setPos = function (x, y) {
-      // this.circle.setPos(x, y);
-    // }
-    this.draw = function (ctx) {this.circle.draw(ctx);}
+
   }
 
   function Paddle (circleInstance, angle, outerRadius) {
@@ -140,10 +124,8 @@
 
     this.setAngle = function (newAngle) {
       this.angle = newAngle;
-      this.circle.setPos(
-        this.outerRadius * Math.cos(this.angle),
-        this.outerRadius * Math.sin(this.angle)
-      );
+      this.circle.x = this.outerRadius * Math.cos(this.angle),
+      this.circle.y = this.outerRadius * Math.sin(this.angle)
     }
 
     this.setAngle(angle);
@@ -165,7 +147,7 @@
 
 
 
-  var ball = new Ball(new Circle(0, 0, 20, 'red', 'black'), 10, 10);
+  var ball = new Ball(new Circle(0, 0, 20, 'red', 'black'), 10, 0.03);
 
   var paddle = new Paddle(new Circle(-100, 100, 50, 'yellow', 'blue'),
     0, 100);
@@ -194,14 +176,13 @@
 
   function drawCircle(circle){
     ctx.fillStyle = circle.color;
-    // Offset so origin is at center
+
     ctx.beginPath()
     ctx.arc(circle.x + W/2, circle.y + H/2, circle.radius, 0, TWO_PI, false);
     ctx.fill();
     ctx.lineWidth = 5;
     ctx.strokeStyle = circle.outlineColor;
-    // ctx.strokeStyle = rndColor();
-    // ctx.strokeStyle = '#ff00ff';
+
     ctx.stroke();
     ctx.closePath();
   }
@@ -273,15 +254,23 @@
       var returnAngle = 2*surfaceAngle - ball.vAngle;
       ball.vAngle = returnAngle;
 
-      socket.emit('ball-update', ball);
-
+      publishBallUpdate();
     }
   }
 
 
+  //Simply calculates where the ball is needed
   function update() {
     // ball.x += 1;
-    ball.update(0.1);
+    // ball.update(0.1);
+
+    // Elapsed milliseconds
+    var dt = (new Date()).getTime() - ball.initial.time;
+
+    ball.circle.x = ball.initial.x + ball.initial.vMagnitude * Math.cos(ball.initial.vAngle) * dt;
+    ball.circle.y = ball.initial.y + ball.initial.vMagnitude * Math.sin(ball.initial.vAngle) * dt;
+
+
     if (leftPressed){
       paddle.incrementAngle(TWO_PI / paddleSlowness);
       publishPaddleUpdate();
