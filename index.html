@@ -36,10 +36,10 @@
     publishPaddleUpdate();
   });
 
-  // Don't actually have to do anything with this
-  socket.on('player-connected', function(playerId) {
-    console.log('socket '+socket.id+' sees player joined: '+playerId);
-  });
+  // // Don't actually have to do anything with this
+  // socket.on('player-connected', function(playerId) {
+  //   console.log('socket '+socket.id+' sees player joined: '+playerId);
+  // });
 
   socket.on('player-disconnected', function(playerId) {
     console.log('socket '+myId+' sees player left: '+playerId);
@@ -60,22 +60,23 @@
   });
 
 
-  function publishBallUpdate(){
-    var ballInfo = {
-      time: (new Date()).getTime(),
-      x: ball.circle.x,
-      y: ball.circle.y,
-      vAngle: ball.vAngle,
-      vMagnitude: ball.vMagnitude
-    };
-    console.log('socket: ', myId, 'publishing ball update: ', ballInfo);
-    socket.emit('ball-update', ballInfo);
-  }
+  // function publishBallUpdate(){
+  //   // var ballInfo = {
+  //   //   time: (new Date()).getTime(),
+  //   //   x: ball.circle.x,
+  //   //   y: ball.circle.y,
+  //   //   vAngle: ball.vAngle,
+  //   //   vMagnitude: ball.vMagnitude
+  //   // };
+  //   // console.log('socket: ', myId, 'publishing ball update: ', ballInfo);
+  //   // socket.emit('ball-update', ballInfo);
+  //   socket.emit('ball-update', ball.snapshot);
+  // }
 
   function publishPaddleUpdate () {
     var updateInfo = {
       playerId: myId, //socket.id,
-      paddle: paddle
+      paddle: takePaddleSnapshot()
     };
     console.log('publishing paddle update: ', updateInfo);
     socket.emit('paddle-update', updateInfo);
@@ -87,70 +88,112 @@
 
   var TWO_PI = 2 * Math.PI;
 
-  function Circle (x, y, radius, color, outlineColor) {
-    this.x = x;
-    this.y = y;
-    this.radius = radius;
-    this.color = color;
-    this.outlineColor = outlineColor;
-    // this.setPos = function (x, y) {
-    //   this.x = x;
-    //   this.y = y;
-    // };
-  }
-
-
-
-  function Ball (circleInstance, vAngle, vMagnitude) {
-    this.vAngle = vAngle;
-    this.vMagnitude = vMagnitude;
-
-    this.circle = circleInstance;
-
-    // Most recent definitive thingy
-    this.initial = {
-      time: (new Date()).getTime(),
-      x: this.circle.x,
-      y: this.circle.y,
-      vAngle: this.vAngle,
-      vMagnitude: this.vMagnitude
-    };
-
-  }
-
-  function Paddle (circleInstance, angle, outerRadius) {
-    this.circle = circleInstance;
-    this.outerRadius = outerRadius;
-
-    this.setAngle = function (newAngle) {
-      this.angle = newAngle;
-      this.circle.x = this.outerRadius * Math.cos(this.angle),
-      this.circle.y = this.outerRadius * Math.sin(this.angle)
-    }
-
-    this.setAngle(angle);
-
-    this.incrementAngle = function (delta) {
-      this.setAngle(this.angle + delta);
-    }
-
-    // this.draw = function (ctx) {this.circle.draw(ctx);}
-
-    this.resolveCollision = function (ball){
-
-    }
-  }
-
-  // function Paddle (angle, outerRadius, radius, color) {
-
+  // function Circle (x, y, radius, color, outlineColor) {
+  //   this.x = x;
+  //   this.y = y;
+  //   this.radius = radius;
+  //   this.color = color;
+  //   this.outlineColor = outlineColor;
+  //   // this.setPos = function (x, y) {
+  //   //   this.x = x;
+  //   //   this.y = y;
+  //   // };
   // }
 
 
 
-  var ball = new Ball(new Circle(0, 0, 20, 'red', 'black'), 10, 0.03);
+  // function Ball (circleInstance, vAngle, vMagnitude) {
+  //   this.vAngle = vAngle;
+  //   this.vMagnitude = vMagnitude;
 
-  var paddle = new Paddle(new Circle(-100, 100, 50, 'yellow', 'blue'),
-    0, 100);
+  //   this.circle = circleInstance;
+
+  //   // Most recent definitive thingy
+  //   this.initial = {
+  //     time: (new Date()).getTime(),
+  //     x: this.circle.x,
+  //     y: this.circle.y,
+  //     vAngle: this.vAngle,
+  //     vMagnitude: this.vMagnitude
+  //   };
+
+  // }
+
+  // function Paddle (circleInstance, angle, outerRadius) {
+  //   this.circle = circleInstance;
+  //   this.outerRadius = outerRadius;
+
+  //   this.setAngle = function (newAngle) {
+  //     this.angle = newAngle;
+  //     this.circle.x = this.outerRadius * Math.cos(this.angle),
+  //     this.circle.y = this.outerRadius * Math.sin(this.angle)
+  //   }
+
+  //   this.setAngle(angle);
+
+  // }
+
+  // var ball = new Ball(new Circle(0, 0, 20, 'red', 'black'), 10, 0.03);
+
+  // var paddle = new Paddle(new Circle(-100, 100, 50, 'yellow', 'blue'),
+  //   0, 100);
+
+  var ball = {
+    x: 0,
+    y: 0,
+    radius: 20,
+    color: 'red',
+    outlineColor: 'black',
+    vAngle: 10,
+    vMagnitude: 0.03
+  };
+
+  function takeBallSnapshot() {
+    return {
+      x: ball.x,
+      y: ball.y,
+      time: (new Date()).getTime(),
+      vAngle: ball.vAngle,
+      vMagnitude: ball.vMagnitude
+    };
+  }
+
+  ball.snapshot = takeBallSnapshot();
+
+
+  var paddle = {
+    angle: 0,
+    trackRadius: 100,
+    get x () {
+      return this.trackRadius * Math.cos(this.angle);
+    },
+    get y () {
+      return this.trackRadius * Math.sin(this.angle);
+    },
+    radius: 50,
+    color: 'yellow',
+    outlineColor: 'blue',
+    speed: 0.03         // How fast it moves around the track
+  };
+
+  // For purely drawing purposes
+  function takePaddleSnapshot(){
+    return {
+      x: paddle.x,
+      y: paddle.y,
+      radius: paddle.radius,
+      color: paddle.color,
+      outlineColor: paddle.outlineColor,
+    };
+  }
+
+  // function takeCircleSn
+
+  // function takePaddleSnapshot() {
+  //   return {
+  //     x:
+  //   }
+  // }
 
   // socket.emit('paddle-update')
   // Now that we have our paddle created
@@ -162,23 +205,23 @@
   canvas.width = W;
   canvas.height = H;
 
-  function rndHex(){
-    return '0123456789abcdef'[Math.floor(Math.random()*16)];
-  }
+  // function rndHex(){
+  //   return '0123456789abcdef'[Math.floor(Math.random()*16)];
+  // }
 
-  function rndColor () {
-    var out = '#';
-    for (var i=0; i<6; i++){
-      out += rndHex();
-    }
-    return out;
-  }
+  // function rndColor () {
+  //   var out = '#';
+  //   for (var i=0; i<6; i++){
+  //     out += rndHex();
+  //   }
+  //   return out;
+  // }
 
   function drawCircle(circle){
     ctx.fillStyle = circle.color;
 
     ctx.beginPath()
-    ctx.arc(circle.x + W/2, circle.y + H/2, circle.radius, 0, TWO_PI, false);
+    ctx.arc(circle.x + canvas.width/2, circle.y + canvas.height/2, circle.radius, 0, TWO_PI, false);
     ctx.fill();
     ctx.lineWidth = 5;
     ctx.strokeStyle = circle.outlineColor;
@@ -189,7 +232,7 @@
 
   function redraw() {
     ctx.clearRect(0, 0, W, H);
-    // Needed to clear
+
     ctx.beginPath();
     ctx.strokeStyle = 'black';
     ctx.strokeRect(0, 0, W, H);
@@ -197,95 +240,85 @@
 
     for (var id in others){
       // console.log('drawing others: ', id, others[id]);
-      drawCircle(others[id].circle);
+      drawCircle(others[id]);
     }
 
-    drawCircle(ball.circle);
-    drawCircle(paddle.circle);
+    drawCircle(ball);
+    drawCircle(paddle);
 
   }
 
   var leftPressed = false;
   var rightPressed = false;
 
-  var paddleSlowness = 30;
+  // var paddleSlowness = 30;
 
-  function calcDistance(x1, y1, x2, y2) {
-    return Math.sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
-  }
+  // function calcDistance(x1, y1, x2, y2) {
+  //   return Math.sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
+  // }
 
 
 
   // TODO don't emit right in this function...?
+  // returns true if a collision occurred
   function detectAndResolveCollision(){
-    var b = ball.circle;
-    var p = paddle.circle;
+    // var b = ball.circle;
+    // var p = paddle.circle;
     // var distance = calcDistance(b.x, b.y, p.x, p.y);
-    var diffX = p.x - b.x;
-    var diffY = p.y - b.y;
+    var diffX = paddle.x - ball.x;
+    var diffY = paddle.y - ball.y;
 
     var distance = Math.sqrt(diffX*diffX + diffY*diffY);
 
-    if (distance < (b.radius + p.radius)){
-      //Collision
-          // Displacement vector
-
-      var overlap = b.radius + p.radius - distance;
+    if (distance < (ball.radius + paddle.radius)){
+      var overlap = ball.radius + paddle.radius - distance;
 
       var offsetX = overlap * -(diffX / distance);
       var offsetY = overlap * -(diffY / distance);
 
-      b.x += offsetX;
-      b.y += offsetY;
-
-
+      ball.x += offsetX;
+      ball.y += offsetY;
 
       var vx = ball.vMagnitude * Math.cos(ball.vAngle);
       var vy = ball.vMagnitude * Math.sin(ball.vAngle);
 
       var dot = diffX * vx + diffY * vy;
       
-      if (dot < 0) {      // ball is moving away from paddle anyway
-        return;           //  so don't alter velocity
-      }                   //  (maybe rethink at some point)
-
-      var surfaceAngle = Math.PI/2 + Math.atan2(diffY, diffX);
-      // var surfaceAngle = 90 + Math.atan2(diffY, diffX);
-      var returnAngle = 2*surfaceAngle - ball.vAngle;
-      ball.vAngle = returnAngle;
-
-      publishBallUpdate();
+      if (dot > 0) {    // If ball is moving towards paddle
+        var surfaceAngle = Math.PI/2 + Math.atan2(diffY, diffX);
+        // var surfaceAngle = 90 + Math.atan2(diffY, diffX);
+        var returnAngle = 2*surfaceAngle - ball.vAngle;
+        ball.vAngle = returnAngle;
+      }
+      return true;
     }
+    return false;
   }
 
 
   //Simply calculates where the ball is needed
   function update() {
-    // ball.x += 1;
-    // ball.update(0.1);
 
     // Elapsed milliseconds
-    var dt = (new Date()).getTime() - ball.initial.time;
+    var dt = (new Date()).getTime() - ball.snapshot.time;
 
-    ball.circle.x = ball.initial.x + ball.initial.vMagnitude * Math.cos(ball.initial.vAngle) * dt;
-    ball.circle.y = ball.initial.y + ball.initial.vMagnitude * Math.sin(ball.initial.vAngle) * dt;
-
+    ball.x = ball.snapshot.x + ball.snapshot.vMagnitude * Math.cos(ball.snapshot.vAngle) * dt;
+    ball.y = ball.snapshot.y + ball.snapshot.vMagnitude * Math.sin(ball.snapshot.vAngle) * dt;
 
     if (leftPressed){
-      paddle.incrementAngle(TWO_PI / paddleSlowness);
+      paddle.angle += TWO_PI * paddle.speed;
       publishPaddleUpdate();
-      // socket.emit('paddle-update', {
-      //   playerId: socket.id,
-      //   paddle: paddle
-      // });
     }
     if (rightPressed) {
-      paddle.incrementAngle(-TWO_PI / paddleSlowness);
+      paddle.angle -= TWO_PI * paddle.speed;
       publishPaddleUpdate();
     }
-    // console.log('updating');
-    // paddle.setAngle ( paddle.angle + TWO_PI/400 );
-    detectAndResolveCollision();
+    var collision = detectAndResolveCollision();
+    if (collision){
+      ball.snapshot = takeBallSnapshot();
+      // publishBallUpdate();
+      socket.emit('ball-update', ball.snapshot);
+    }
   }
 
   setInterval(function(){
@@ -295,13 +328,10 @@
 
 
   $(document).keydown(function(e){
-    // console.log('keypressed');
     if (e.which === 37) {         // left arrow
       leftPressed = true;
-      // paddle.incrementAngle(TWO_PI / 10);
     } else if (e.which === 39) {  // right arrow
       rightPressed = true;
-      // paddle.incrementAngle(-TWO_PI / 10);
     }
   });
 
@@ -312,6 +342,8 @@
       rightPressed = false;
     }
   });
+
+  // $(document.mouse)
 </script>
 
 </html>
