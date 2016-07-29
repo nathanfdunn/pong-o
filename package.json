@@ -1,0 +1,30 @@
+{
+  "name": "circle-pong",
+  "version": "0.0.1",
+  "description": "A coop, multiplayer pong game",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch-start": "nodemon . & browser-sync start --server --file \"*.html, *.css\"",
+    "watch-start": "nodemon .",
+    "watch-sync": "browser-sync start --server --files \"*.html, *.css\"",
+    "watch": "browser-sync start -p localhost:3000 --port 3001 -f -f server.log & nodemon .",
+    "watch-bs": "browser-sync start -p localhost:3000 --port 3001 -f -f server.log",
+    "start": "node .",
+
+
+    "watch-start-2": "nodemon . & npm run watch-sync"
+
+    
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.14.0",
+    "socket.io": "^1.4.8"
+  },
+  "devDependencies": {
+    "browser-sync": "^2.13.0",
+    "nodemon": "^1.10.0"
+  }
+}

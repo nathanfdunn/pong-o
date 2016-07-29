@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Circle Pong</title>
+  <!-- <script src="client.js"></script> -->
+  
+</head>
+<body>
+
+  <canvas id="canvas"></canvas>
+</body>
+<!-- Jquery... -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  // maps player ids to their paddle objects
+  var others = {};
+
+  var socket = io();
+
+  // var saved = Object.assign({}, socket);
+
+  // console.log('socket: ', saved);
+  // console.log('socket ID: ', socket.id);
+
+  // var myId = socket.id;
+  // console.log('My ID: ', myId);
+
+  // 
+  var myId;     // Can't trust socket.id
+
+  socket.on('initialized', function(initInfo){
+    myId = initInfo.yourId;
+    others = initInfo.otherPaddles;
+    publishPaddleUpdate();
+  });
+
+  // Don't actually have to do anything with this
+  socket.on('player-connected', function(playerId) {
+    console.log('socket '+socket.id+' sees player joined: '+playerId);
+  });
+
+  socket.on('player-disconnected', function(playerId) {
+    console.log('socket '+myId+' sees player left: '+playerId);
+    delete others[playerId];
+    // console.log('remaining players', others);
+    for (var id in others){
+      console.log('id: ', id, 'obj: ', others[id]);
+    }
+  });
+
+  socket.on('paddle-update', function(paddleInfo) {
+    console.log('Received paddle update: ', paddleInfo);
+    others[paddleInfo.playerId] = paddleInfo.paddle;
+  });
+
+  socket.on('ball-update', function(ballInfo) {
+    ball.circle = ballInfo.circle;
+    ball.vAngle = ballInfo.vAngle;
+    ball.vMagnitude = ballInfo.vMagnitude;
+  });
+
+
+  function publishPaddleUpdate () {
+    var updateInfo = {
+      playerId: myId, //socket.id,
+      paddle: paddle
+    };
+    console.log('publishing paddle update: ', updateInfo);
+    socket.emit('paddle-update', updateInfo);
+  }
+
+  function publishBallUpdate () {
+
+  }
+
+
+
+  // socket.emit('plain-obj', {json:'object'});
+
+  var W = 300, H = 300;
+
+  var TWO_PI = 2 * Math.PI;
+
+  function Circle (x, y, radius, color, outlineColor) {
+    this.x = x;
+    this.y = y;
+    this.radius = radius;
+    this.color = color;
+    this.outlineColor = outlineColor;
+    // this.draw = function (ctx) {
+    //   ctx.fillStyle = this.color;
+    //   // Offset so origin is at center
+    //   ctx.beginPath()
+    //   ctx.arc(this.x + W/2, this.y + H/2, this.radius, 0, TWO_PI, false);
+    //   ctx.fill();
+    //   ctx.lineWidth = 5;
+    //   ctx.strokeStyle = this.outlineColor;
+    //   // ctx.strokeStyle = rndColor();
+    //   // ctx.strokeStyle = '#ff00ff';
+    //   ctx.stroke();
+    //   ctx.closePath();
+
+    // };
+    this.setPos = function (x, y) {
+      this.x = x;
+      this.y = y;
+    };
+  }
+
+
+
+  function Ball (circleInstance, vAngle, vMagnitude) {
+    this.vAngle = vAngle;
+    this.vMagnitude = vMagnitude;
+
+    // this.vx = vx;
+    // this.vy = vy;
+    this.circle = circleInstance;
+    this.update = function(dt) {
+      var newX = this.circle.x + this.vMagnitude * Math.cos(this.vAngle) * dt;
+      var newY = this.circle.y + this.vMagnitude * Math.sin(this.vAngle) * dt;
+      this.circle.x = newX;
+      this.circle.y = newY;
+      // this.circle.setPos(
+      //   this.circle.x + this.vMagnitude * Math.cos(this.vAngle) * dt,
+      //   this.circle.y + this.vMagnitude * Math.sin(this.vAngle) * dt
+      // );
+    };
+    // this.setPos = function (x, y) {
+      // this.circle.setPos(x, y);
+    // }
+    this.draw = function (ctx) {this.circle.draw(ctx);}
+  }
+
+  function Paddle (circleInstance, angle, outerRadius) {
+    this.circle = circleInstance;
+    this.outerRadius = outerRadius;
+
+    this.setAngle = function (newAngle) {
+      this.angle = newAngle;
+      this.circle.setPos(
+        this.outerRadius * Math.cos(this.angle),
+        this.outerRadius * Math.sin(this.angle)
+      );
+    }
+
+    this.setAngle(angle);
+
+    this.incrementAngle = function (delta) {
+      this.setAngle(this.angle + delta);
+    }
+
+    // this.draw = function (ctx) {this.circle.draw(ctx);}
+
+    this.resolveCollision = function (ball){
+
+    }
+  }
+
+  // function Paddle (angle, outerRadius, radius, color) {
+
+  // }
+
+
+
+  var ball = new Ball(new Circle(0, 0, 20, 'red', 'black'), 10, 10);
+
+  var paddle = new Paddle(new Circle(-100, 100, 50, 'yellow', 'blue'),
+    0, 100);
+
+  // socket.emit('paddle-update')
+  // Now that we have our paddle created
+  // publishPaddleUpdate();
+
+  var canvas = document.getElementById('canvas');
+  var ctx = canvas.getContext('2d');
+
+  canvas.width = W;
+  canvas.height = H;
+
+  function rndHex(){
+    return '0123456789abcdef'[Math.floor(Math.random()*16)];
+  }
+
+  function rndColor () {
+    var out = '#';
+    for (var i=0; i<6; i++){
+      out += rndHex();
+    }
+    return out;
+  }
+
+  function drawCircle(circle){
+    ctx.fillStyle = circle.color;
+    // Offset so origin is at center
+    ctx.beginPath()
+    ctx.arc(circle.x + W/2, circle.y + H/2, circle.radius, 0, TWO_PI, false);
+    ctx.fill();
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = circle.outlineColor;
+    // ctx.strokeStyle = rndColor();
+    // ctx.strokeStyle = '#ff00ff';
+    ctx.stroke();
+    ctx.closePath();
+  }
+
+  function redraw() {
+    ctx.clearRect(0, 0, W, H);
+    // Needed to clear
+    ctx.beginPath();
+    ctx.strokeStyle = 'black';
+    ctx.strokeRect(0, 0, W, H);
+    ctx.closePath();
+
+    for (var id in others){
+      // console.log('drawing others: ', id, others[id]);
+      drawCircle(others[id].circle);
+    }
+
+    drawCircle(ball.circle);
+    drawCircle(paddle.circle);
+
+  }
+
+  var leftPressed = false;
+  var rightPressed = false;
+
+  var paddleSlowness = 30;
+
+  function calcDistance(x1, y1, x2, y2) {
+    return Math.sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
+  }
+
+
+
+  // TODO don't emit right in this function...?
+  function detectAndResolveCollision(){
+    var b = ball.circle;
+    var p = paddle.circle;
+    // var distance = calcDistance(b.x, b.y, p.x, p.y);
+    var diffX = p.x - b.x;
+    var diffY = p.y - b.y;
+
+    var distance = Math.sqrt(diffX*diffX + diffY*diffY);
+
+    if (distance < (b.radius + p.radius)){
+      //Collision
+          // Displacement vector
+
+      var overlap = b.radius + p.radius - distance;
+
+      var offsetX = overlap * -(diffX / distance);
+      var offsetY = overlap * -(diffY / distance);
+
+      b.x += offsetX;
+      b.y += offsetY;
+
+
+
+      var vx = ball.vMagnitude * Math.cos(ball.vAngle);
+      var vy = ball.vMagnitude * Math.sin(ball.vAngle);
+
+      var dot = diffX * vx + diffY * vy;
+      
+      if (dot < 0) {      // ball is moving away from paddle anyway
+        return;           //  so don't alter velocity
+      }                   //  (maybe rethink at some point)
+
+      var surfaceAngle = Math.PI/2 + Math.atan2(diffY, diffX);
+      // var surfaceAngle = 90 + Math.atan2(diffY, diffX);
+      var returnAngle = 2*surfaceAngle - ball.vAngle;
+      ball.vAngle = returnAngle;
+
+      socket.emit('ball-update', ball);
+
+    }
+  }
+
+
+  function update() {
+    // ball.x += 1;
+    ball.update(0.1);
+    if (leftPressed){
+      paddle.incrementAngle(TWO_PI / paddleSlowness);
+      publishPaddleUpdate();
+      // socket.emit('paddle-update', {
+      //   playerId: socket.id,
+      //   paddle: paddle
+      // });
+    }
+    if (rightPressed) {
+      paddle.incrementAngle(-TWO_PI / paddleSlowness);
+      publishPaddleUpdate();
+    }
+    // console.log('updating');
+    // paddle.setAngle ( paddle.angle + TWO_PI/400 );
+    detectAndResolveCollision();
+  }
+
+  setInterval(function(){
+    update();
+    redraw();
+  }, 30)
+
+
+  $(document).keydown(function(e){
+    // console.log('keypressed');
+    if (e.which === 37) {         // left arrow
+      leftPressed = true;
+      // paddle.incrementAngle(TWO_PI / 10);
+    } else if (e.which === 39) {  // right arrow
+      rightPressed = true;
+      // paddle.incrementAngle(-TWO_PI / 10);
+    }
+  });
+
+  $(document).keyup(function(e){
+    if (e.which === 37) {         // left arrow
+      leftPressed = false;
+    } else if (e.which === 39) {  // right arrow
+      rightPressed = false;
+    }
+  });
+</script>
+
+</html>
