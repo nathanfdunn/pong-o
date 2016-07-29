@@ -16,10 +16,15 @@
 <script>
   var myId;     // Can't trust socket.id
 
+  var lastUpdateTime = (new Date()).getTime();
+
   // maps player ids to their paddle objects
   var others = {};
 
   var socket = io();
+
+  var DELAY = 30;         // milliseconds to wait
+  // var FPS = 1000 / DELAY; // How many updates per second
 
   socket.on('initialized', function(initInfo){
     myId = initInfo.yourId;
@@ -89,10 +94,13 @@
     get y () {
       return this.trackRadius * Math.sin(this.angle);
     },
+    angularVelocity: 0,       // radians per second
+    angularAcceleration: 0.001,  // radians per second ^ 2
+    maxAngularVelocity: 0.01,   // radians Per 
     radius: 50,
     color: 'yellow',
     outlineColor: 'blue',
-    speed: 0.03         // How fast it moves around the track
+    // speed: 0.03         // How fast it moves around the track
   };
 
   // For purely drawing purposes
@@ -190,6 +198,9 @@
 
   //Simply calculates where the ball is needed
   function update() {
+    var curTime = (new Date()).getTime();
+    var paddleDt = curTime - lastUpdateTime;
+    lastUpdateTime = curTime;
 
     // Elapsed milliseconds
     var dt = (new Date()).getTime() - ball.snapshot.time;
@@ -197,14 +208,26 @@
     ball.x = ball.snapshot.x + ball.snapshot.vMagnitude * Math.cos(ball.snapshot.vAngle) * dt;
     ball.y = ball.snapshot.y + ball.snapshot.vMagnitude * Math.sin(ball.snapshot.vAngle) * dt;
 
-    if (leftPressed){
-      paddle.angle += TWO_PI * paddle.speed;
-      publishPaddleUpdate();
+    paddle.angle += paddle.angularVelocity * paddleDt;
+
+    if (leftPressed && !rightPressed){
+      paddle.angularVelocity = Math.max(-paddle.maxAngularVelocity, paddle.angularVelocity - paddle.angularAcceleration);
+    } else if (rightPressed && !leftPressed) {
+      paddle.angularVelocity = Math.min(paddle.maxAngularVelocity, paddle.angularVelocity + paddle.angularAcceleration);
+      
+      // paddle.angle -= TWO_PI * paddle.speed;
+
+    } else {
+      if (paddle.angularVelocity > 0){
+        paddle.angularVelocity = Math.max(0, paddle.angularVelocity - paddle.angularAcceleration);
+      } else if (paddle.angularVelocity < 0){
+        paddle.angularVelocity = Math.min(0, paddle.angularVelocity + paddle.angularAcceleration);
+
+      } // else do nothing
+      // paddle.angularVelocity = 
     }
-    if (rightPressed) {
-      paddle.angle -= TWO_PI * paddle.speed;
-      publishPaddleUpdate();
-    }
+    publishPaddleUpdate();
+
     var collision = detectAndResolveCollision();
     if (collision){
       ball.snapshot = takeBallSnapshot();
@@ -215,7 +238,7 @@
   setInterval(function(){
     update();
     redraw();
-  }, 30)
+  }, DELAY)
 
   $(document).keydown(function(e){
     if (e.which === 37) {         // left arrow
