@@ -221,13 +221,13 @@ $(document).mousemove(function(e){
 
 $(document).on('touchstart', function(e){
   mouseDown = true;
-  mouseX = e.touches[0].pageX - canvas.offsetLeft - canvas.width/2;
-  mouseY = e.touches[0].pageY - canvas.offsetTop - canvas.height/2;
+  mouseX = e.originalEvent.touches[0].pageX - canvas.offsetLeft - canvas.width/2;
+  mouseY = e.originalEvent.touches[0].pageY - canvas.offsetTop - canvas.height/2;
 });
 
 $(document).on('touchmove', function(e){
-  mouseX = e.touches[0].pageX - canvas.offsetLeft - canvas.width/2;
-  mouseY = e.touches[0].pageY - canvas.offsetTop - canvas.height/2;
+  mouseX = e.originalEvent.touches[0].pageX - canvas.offsetLeft - canvas.width/2;
+  mouseY = e.originalEvent.touches[0].pageY - canvas.offsetTop - canvas.height/2;
 });
 
 $(document).on('touchend', function(e){
