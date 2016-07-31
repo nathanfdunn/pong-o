@@ -6,8 +6,7 @@
   
 </head>
 <body>
-
-  <canvas id="canvas"></canvas>
+  <canvas id="canvas" style=""></canvas>
 </body>
 <!-- Jquery... -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
@@ -138,25 +137,35 @@ canvas.width = W;
 canvas.height = H;
 
 function drawCircle(circle){
-  ctx.fillStyle = circle.color;
+  ctx.fillStyle = circle.color || 'black';
 
   ctx.beginPath()
   ctx.arc(circle.x + canvas.width/2, circle.y + canvas.height/2, circle.radius, 0, TWO_PI, false);
   ctx.fill();
   ctx.lineWidth = 5;
-  ctx.strokeStyle = circle.outlineColor;
+  ctx.strokeStyle = circle.outlineColor || 'black';
 
   ctx.stroke();
   ctx.closePath();
 }
 
 function redraw() {
-  ctx.clearRect(0, 0, W, H);
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   ctx.beginPath();
   ctx.strokeStyle = 'black';
-  ctx.strokeRect(0, 0, W, H);
+  ctx.strokeRect(0, 0, canvas.width, canvas.height);
   ctx.closePath();
+
+  // if (mouseX !== null){
+  //   console.log('drawing circle at mouse coords');
+  //   drawCircle({
+  //     x: mouseX,
+  //     y: mouseY,
+  //     radius: 5
+  //   });
+  // }
 
   for (var id in others){
     drawCircle(others[id]);
@@ -168,6 +177,48 @@ function redraw() {
 
 var leftPressed = false;
 var rightPressed = false;
+var mouseDown = false;
+var mouseX = null;
+var mouseY = null;
+
+// TODO chain?
+$(document).keydown(function(e){
+  if (e.which === 37) {         // left arrow
+    leftPressed = true;
+  } else if (e.which === 39) {  // right arrow
+    rightPressed = true;
+  }
+});
+
+$(document).keyup(function(e){
+  if (e.which === 37) {         // left arrow
+    leftPressed = false;
+  } else if (e.which === 39) {  // right arrow
+    rightPressed = false;
+  }
+});
+
+$('#canvas').mousedown(function(e){
+  if (e.which === 1) {          // left click
+    mouseDown = true;
+  }
+});
+
+$('#canvas').mouseup(function(e){
+  if (e.which === 1) {          // right click
+    mouseDown = false;
+    mouseX = null;
+    mouseY = null;
+  }
+});
+
+$(document).mousemove(function(e){
+  if (mouseDown){
+    mouseX = e.pageX - canvas.offsetLeft - canvas.width/2;
+    mouseY = e.pageY - canvas.offsetTop - canvas.height/2;
+  }
+});
+
 
 // TODO don't emit right in this function...?
 // returns true if a collision occurred
@@ -220,21 +271,33 @@ function update() {
 
   paddle.angle += paddle.angularVelocity * paddleDt;
 
+
+  // var 
+
   if (leftPressed && !rightPressed){
-    paddle.angularVelocity = Math.max(-paddle.maxAngularVelocity, paddle.angularVelocity - paddle.angularAcceleration);
-  } else if (rightPressed && !leftPressed) {
     paddle.angularVelocity = Math.min(paddle.maxAngularVelocity, paddle.angularVelocity + paddle.angularAcceleration);
+  } else if (rightPressed && !leftPressed) {
+    paddle.angularVelocity = Math.max(-paddle.maxAngularVelocity, paddle.angularVelocity - paddle.angularAcceleration);
     
     // paddle.angle -= TWO_PI * paddle.speed;
 
-  } else {
+  } else if (mouseX !== null && mouseY !== null) {
+    var desiredAngle = Math.atan2(mouseY, mouseX);
+    var sinDelta = Math.sin(desiredAngle - paddle.angle);
+    if (sinDelta < 0) {
+      paddle.angularVelocity = Math.max(-paddle.maxAngularVelocity, paddle.angularVelocity - paddle.angularAcceleration);
+    } else if (sinDelta > 0) {
+      paddle.angularVelocity = Math.min(paddle.maxAngularVelocity, paddle.angularVelocity + paddle.angularAcceleration);
+
+    }
+
+  } else {      // slow down
     if (paddle.angularVelocity > 0){
       paddle.angularVelocity = Math.max(0, paddle.angularVelocity - paddle.angularAcceleration);
     } else if (paddle.angularVelocity < 0){
       paddle.angularVelocity = Math.min(0, paddle.angularVelocity + paddle.angularAcceleration);
 
-    } // else do nothing
-    // paddle.angularVelocity = 
+    }
   }
   publishPaddleUpdate();
 
@@ -252,21 +315,6 @@ setInterval(function(){
   }
 }, DELAY)
 
-$(document).keydown(function(e){
-  if (e.which === 37) {         // left arrow
-    leftPressed = true;
-  } else if (e.which === 39) {  // right arrow
-    rightPressed = true;
-  }
-});
-
-$(document).keyup(function(e){
-  if (e.which === 37) {         // left arrow
-    leftPressed = false;
-  } else if (e.which === 39) {  // right arrow
-    rightPressed = false;
-  }
-});
 
 })();
 
