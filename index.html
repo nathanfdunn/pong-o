@@ -15,245 +15,260 @@
 <script src="/socket.io/socket.io.js"></script>
 <script>
 
-  // a hex string
-  function getRandomColor () {
-    var out = '#';
-    for (var i=0; i<6; i++){
-      out += '0123456789abcdef'[Math.floor(Math.random()*16)];
-    }
-    return out;
+(function(){
+
+// a hex string
+function getRandomColor () {
+  var out = '#';
+  for (var i=0; i<6; i++){
+    out += '0123456789abcdef'[Math.floor(Math.random()*16)];
   }
+  return out;
+}
 
 
-  var lastUpdateTime = (new Date()).getTime();
+var lastUpdateTime = (new Date()).getTime();
 
-  // maps player ids to their paddle objects
-  var others = {};
+// maps player ids to their paddle objects
+var others = {};
 
-  var socket = io();
+var socket = io();
 
-  var DELAY = 30;         // milliseconds to wait
-  // var FPS = 1000 / DELAY; // How many updates per second
+var DELAY = 30;         // milliseconds to wait
+// var FPS = 1000 / DELAY; // How many updates per second
 
-  var myId;
+var myId;
 
-  socket.on('initialized', function(initInfo){
-    myId = initInfo.yourId;
-    others = initInfo.otherPaddles;
-    publishPaddleUpdate();
-  });
+var hasBeenInitialized = false;
 
-  socket.on('player-disconnected', function(playerId) {
-    console.log('socket '+myId+' sees player left: '+playerId);
-    delete others[playerId];
-    for (var id in others){
-      console.log('id: ', id, 'obj: ', others[id]);
-    }
-  });
+socket.on('initialized', function(initInfo){
+  myId = initInfo.yourId;
+  hasBeenInitialized = true;
+  others = initInfo.otherPaddles;
+  publishPaddleUpdate();
+});
 
-  socket.on('paddle-update', function(paddleInfo) {
-    console.log('Received paddle update: ', paddleInfo);
-    others[paddleInfo.playerId] = paddleInfo.paddle;
-  });
-
-  socket.on('ball-update', function(ballSnapshot) {
-    ball.snapshot = ballSnapshot;
-  });
-
-  function publishPaddleUpdate () {
-    var updateInfo = {
-      playerId: myId, //socket.id,
-      paddle: takePaddleSnapshot()
-    };
-    // console.log('publishing paddle update: ', updateInfo);
-    socket.emit('paddle-update', updateInfo);
+socket.on('player-disconnected', function(playerId) {
+  console.log('socket '+myId+' sees player left: '+playerId);
+  delete others[playerId];
+  for (var id in others){
+    console.log('id: ', id, 'obj: ', others[id]);
   }
+});
 
-  var W = 300, H = 300;
+socket.on('paddle-update', function(paddleInfo) {
+  console.log('Received paddle update: ', paddleInfo);
+  others[paddleInfo.playerId] = paddleInfo.paddle;
+});
 
-  var TWO_PI = 2 * Math.PI;
+socket.on('ball-update', function(ballSnapshot) {
+  ball.snapshot = ballSnapshot;
+});
 
-  var ball = {
-    x: 0,
-    y: 0,
-    radius: 20,
-    color: 'red',
-    outlineColor: 'black',
-    vAngle: 10,
-    vMagnitude: 0.03
+function publishPaddleUpdate () {
+
+  var updateInfo = {
+    playerId: myId, //socket.id,
+    paddle: takePaddleSnapshot()
   };
+  // console.log('publishing paddle update: ', updateInfo);
+  socket.emit('paddle-update', updateInfo);
+}
 
-  function takeBallSnapshot() {
-    return {
-      x: ball.x,
-      y: ball.y,
-      time: (new Date()).getTime(),
-      vAngle: ball.vAngle,
-      vMagnitude: ball.vMagnitude
-    };
-  }
+var W = 300, H = 300;
 
-  ball.snapshot = takeBallSnapshot();
+var TWO_PI = 2 * Math.PI;
 
+var ball = {
+  x: 0,
+  y: 0,
+  radius: 20,
+  color: 'red',
+  outlineColor: 'black',
+  vAngle: 10,
+  vMagnitude: 0.03
+};
 
-  var paddle = {
-    angle: 0,
-    trackRadius: 100,
-    get x () {
-      return this.trackRadius * Math.cos(this.angle);
-    },
-    get y () {
-      return this.trackRadius * Math.sin(this.angle);
-    },
-    angularVelocity: 0,       // radians per second
-    angularAcceleration: 0.001,  // radians per second ^ 2
-    maxAngularVelocity: 0.01,   // radians Per 
-    radius: 50,
-    color: getRandomColor(),
-    outlineColor: getRandomColor(),
-    // speed: 0.03         // How fast it moves around the track
+function takeBallSnapshot() {
+  return {
+    x: ball.x,
+    y: ball.y,
+    time: (new Date()).getTime(),
+    vAngle: ball.vAngle,
+    vMagnitude: ball.vMagnitude
   };
+}
 
-  // For purely drawing purposes
-  function takePaddleSnapshot(){
-    return {
-      x: paddle.x,
-      y: paddle.y,
-      radius: paddle.radius,
-      color: paddle.color,
-      outlineColor: paddle.outlineColor,
-    };
+ball.snapshot = takeBallSnapshot();
+
+
+var paddle = {
+  angle: 0,
+  trackRadius: 100,
+  get x () {
+    return this.trackRadius * Math.cos(this.angle);
+  },
+  get y () {
+    return this.trackRadius * Math.sin(this.angle);
+  },
+  angularVelocity: 0,       // radians per second
+  angularAcceleration: 0.001,  // radians per second ^ 2
+  maxAngularVelocity: 0.01,   // radians Per 
+  radius: 50,
+  color: getRandomColor(),
+  outlineColor: getRandomColor(),
+  // speed: 0.03         // How fast it moves around the track
+};
+
+// For purely drawing purposes
+function takePaddleSnapshot(){
+  return {
+    x: paddle.x,
+    y: paddle.y,
+    radius: paddle.radius,
+    color: paddle.color,
+    outlineColor: paddle.outlineColor,
+  };
+}
+
+var canvas = document.getElementById('canvas');
+var ctx = canvas.getContext('2d');
+
+canvas.width = W;
+canvas.height = H;
+
+function drawCircle(circle){
+  ctx.fillStyle = circle.color;
+
+  ctx.beginPath()
+  ctx.arc(circle.x + canvas.width/2, circle.y + canvas.height/2, circle.radius, 0, TWO_PI, false);
+  ctx.fill();
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = circle.outlineColor;
+
+  ctx.stroke();
+  ctx.closePath();
+}
+
+function redraw() {
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.beginPath();
+  ctx.strokeStyle = 'black';
+  ctx.strokeRect(0, 0, W, H);
+  ctx.closePath();
+
+  for (var id in others){
+    drawCircle(others[id]);
   }
 
-  var canvas = document.getElementById('canvas');
-  var ctx = canvas.getContext('2d');
+  drawCircle(ball);
+  drawCircle(paddle);
+}
 
-  canvas.width = W;
-  canvas.height = H;
+var leftPressed = false;
+var rightPressed = false;
 
-  function drawCircle(circle){
-    ctx.fillStyle = circle.color;
+// TODO don't emit right in this function...?
+// returns true if a collision occurred
+function detectAndResolveCollision(){
+  var diffX = paddle.x - ball.x;
+  var diffY = paddle.y - ball.y;
 
-    ctx.beginPath()
-    ctx.arc(circle.x + canvas.width/2, circle.y + canvas.height/2, circle.radius, 0, TWO_PI, false);
-    ctx.fill();
-    ctx.lineWidth = 5;
-    ctx.strokeStyle = circle.outlineColor;
+  var distance = Math.sqrt(diffX*diffX + diffY*diffY);
 
-    ctx.stroke();
-    ctx.closePath();
-  }
+  if (distance < (ball.radius + paddle.radius)){
+    var overlap = ball.radius + paddle.radius - distance;
 
-  function redraw() {
-    ctx.clearRect(0, 0, W, H);
+    var offsetX = overlap * -(diffX / distance);
+    var offsetY = overlap * -(diffY / distance);
 
-    ctx.beginPath();
-    ctx.strokeStyle = 'black';
-    ctx.strokeRect(0, 0, W, H);
-    ctx.closePath();
+    ball.x += offsetX;
+    ball.y += offsetY;
 
-    for (var id in others){
-      drawCircle(others[id]);
+    var vx = ball.vMagnitude * Math.cos(ball.vAngle);
+    var vy = ball.vMagnitude * Math.sin(ball.vAngle);
+
+    var dot = diffX * vx + diffY * vy;
+    
+    if (dot > 0) {    // If ball is moving towards paddle
+      var surfaceAngle = Math.PI/2 + Math.atan2(diffY, diffX);
+      var returnAngle = 2*surfaceAngle - ball.vAngle;
+      ball.vAngle = returnAngle;
     }
-
-    drawCircle(ball);
-    drawCircle(paddle);
+    return true;
   }
+  return false;
+}
 
-  var leftPressed = false;
-  var rightPressed = false;
-
-  // TODO don't emit right in this function...?
-  // returns true if a collision occurred
-  function detectAndResolveCollision(){
-    var diffX = paddle.x - ball.x;
-    var diffY = paddle.y - ball.y;
-
-    var distance = Math.sqrt(diffX*diffX + diffY*diffY);
-
-    if (distance < (ball.radius + paddle.radius)){
-      var overlap = ball.radius + paddle.radius - distance;
-
-      var offsetX = overlap * -(diffX / distance);
-      var offsetY = overlap * -(diffY / distance);
-
-      ball.x += offsetX;
-      ball.y += offsetY;
-
-      var vx = ball.vMagnitude * Math.cos(ball.vAngle);
-      var vy = ball.vMagnitude * Math.sin(ball.vAngle);
-
-      var dot = diffX * vx + diffY * vy;
-      
-      if (dot > 0) {    // If ball is moving towards paddle
-        var surfaceAngle = Math.PI/2 + Math.atan2(diffY, diffX);
-        var returnAngle = 2*surfaceAngle - ball.vAngle;
-        ball.vAngle = returnAngle;
-      }
-      return true;
-    }
-    return false;
+//Simply calculates where the ball is needed
+function update() {
+  // delete others[undefined];   //hack - not sure why it's appearing
+  for (var id in others){
+    console.log(id, others[id]);
+    // console.log(others[id]);
   }
+  var curTime = (new Date()).getTime();
+  var paddleDt = curTime - lastUpdateTime;
+  lastUpdateTime = curTime;
 
-  //Simply calculates where the ball is needed
-  function update() {
-    var curTime = (new Date()).getTime();
-    var paddleDt = curTime - lastUpdateTime;
-    lastUpdateTime = curTime;
+  // Elapsed milliseconds
+  var dt = (new Date()).getTime() - ball.snapshot.time;
 
-    // Elapsed milliseconds
-    var dt = (new Date()).getTime() - ball.snapshot.time;
+  ball.x = ball.snapshot.x + ball.snapshot.vMagnitude * Math.cos(ball.snapshot.vAngle) * dt;
+  ball.y = ball.snapshot.y + ball.snapshot.vMagnitude * Math.sin(ball.snapshot.vAngle) * dt;
 
-    ball.x = ball.snapshot.x + ball.snapshot.vMagnitude * Math.cos(ball.snapshot.vAngle) * dt;
-    ball.y = ball.snapshot.y + ball.snapshot.vMagnitude * Math.sin(ball.snapshot.vAngle) * dt;
+  paddle.angle += paddle.angularVelocity * paddleDt;
 
-    paddle.angle += paddle.angularVelocity * paddleDt;
+  if (leftPressed && !rightPressed){
+    paddle.angularVelocity = Math.max(-paddle.maxAngularVelocity, paddle.angularVelocity - paddle.angularAcceleration);
+  } else if (rightPressed && !leftPressed) {
+    paddle.angularVelocity = Math.min(paddle.maxAngularVelocity, paddle.angularVelocity + paddle.angularAcceleration);
+    
+    // paddle.angle -= TWO_PI * paddle.speed;
 
-    if (leftPressed && !rightPressed){
-      paddle.angularVelocity = Math.max(-paddle.maxAngularVelocity, paddle.angularVelocity - paddle.angularAcceleration);
-    } else if (rightPressed && !leftPressed) {
-      paddle.angularVelocity = Math.min(paddle.maxAngularVelocity, paddle.angularVelocity + paddle.angularAcceleration);
-      
-      // paddle.angle -= TWO_PI * paddle.speed;
+  } else {
+    if (paddle.angularVelocity > 0){
+      paddle.angularVelocity = Math.max(0, paddle.angularVelocity - paddle.angularAcceleration);
+    } else if (paddle.angularVelocity < 0){
+      paddle.angularVelocity = Math.min(0, paddle.angularVelocity + paddle.angularAcceleration);
 
-    } else {
-      if (paddle.angularVelocity > 0){
-        paddle.angularVelocity = Math.max(0, paddle.angularVelocity - paddle.angularAcceleration);
-      } else if (paddle.angularVelocity < 0){
-        paddle.angularVelocity = Math.min(0, paddle.angularVelocity + paddle.angularAcceleration);
-
-      } // else do nothing
-      // paddle.angularVelocity = 
-    }
-    publishPaddleUpdate();
-
-    var collision = detectAndResolveCollision();
-    if (collision){
-      ball.snapshot = takeBallSnapshot();
-      socket.emit('ball-update', ball.snapshot);
-    }
+    } // else do nothing
+    // paddle.angularVelocity = 
   }
+  publishPaddleUpdate();
 
-  setInterval(function(){
+  var collision = detectAndResolveCollision();
+  if (collision){
+    ball.snapshot = takeBallSnapshot();
+    socket.emit('ball-update', ball.snapshot);
+  }
+}
+
+setInterval(function(){
+  if (hasBeenInitialized){
     update();
     redraw();
-  }, DELAY)
+  }
+}, DELAY)
 
-  $(document).keydown(function(e){
-    if (e.which === 37) {         // left arrow
-      leftPressed = true;
-    } else if (e.which === 39) {  // right arrow
-      rightPressed = true;
-    }
-  });
+$(document).keydown(function(e){
+  if (e.which === 37) {         // left arrow
+    leftPressed = true;
+  } else if (e.which === 39) {  // right arrow
+    rightPressed = true;
+  }
+});
 
-  $(document).keyup(function(e){
-    if (e.which === 37) {         // left arrow
-      leftPressed = false;
-    } else if (e.which === 39) {  // right arrow
-      rightPressed = false;
-    }
-  });
+$(document).keyup(function(e){
+  if (e.which === 37) {         // left arrow
+    leftPressed = false;
+  } else if (e.which === 39) {  // right arrow
+    rightPressed = false;
+  }
+});
+
+})();
 
 </script>
 

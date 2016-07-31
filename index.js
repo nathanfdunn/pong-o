@@ -2,12 +2,12 @@ var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 
+// TODO remove?
 var clients = {};
 var allPaddles = {};
 
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
-  // res.send('<h1>Hello world</h1>');
 });
 
 io.on('connection', function(socket){
@@ -22,12 +22,14 @@ io.on('connection', function(socket){
     otherPaddles: allPaddles
   });
 
+  setInterval(function(){console.log('cur paddles\n', allPaddles, '\n');}, 1000);
+
   // ??
   // io.emit('player-connected', socket.id);
   socket.broadcast.emit('player-connected', socket.id);
 
   socket.on('disconnect', function(){
-    console.log('A player has disconnected, id: '+socket.id);
+    console.log('A player has disconnected, id: ', socket.id);
     delete clients[socket.id];
     delete allPaddles[socket.id];
     socket.broadcast.emit('player-disconnected', socket.id);
@@ -52,9 +54,9 @@ io.on('connection', function(socket){
 
 
 
-function publishBallUpdate(){
+// function publishBallUpdate(){
 
-}
+// }
 var port = process.env.PORT || 3000;
 http.listen(port, function(){
   console.log('listening on *:', port);
