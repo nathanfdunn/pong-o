@@ -1,9 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Circle Pong</title>
-  <!-- <script src="client.js"></script> -->
-  
+  <title></title>
 </head>
 <body>
   <canvas id="canvas" style=""></canvas>
@@ -198,14 +196,16 @@ $(document).keyup(function(e){
   }
 });
 
-$('#canvas').mousedown(function(e){
+$(document).mousedown(function(e){
   if (e.which === 1) {          // left click
     mouseDown = true;
+    mouseX = e.pageX - canvas.offsetLeft - canvas.width/2;
+    mouseY = e.pageY - canvas.offsetTop - canvas.height/2;
   }
 });
 
-$('#canvas').mouseup(function(e){
-  if (e.which === 1) {          // right click
+$(document).mouseup(function(e){
+  if (e.which === 1) {          // left click
     mouseDown = false;
     mouseX = null;
     mouseY = null;
@@ -219,6 +219,26 @@ $(document).mousemove(function(e){
   }
 });
 
+$(document).on('touchstart', function(e){
+  mouseDown = true;
+  mouseX = e.touches[0].pageX - canvas.offsetLeft - canvas.width/2;
+  mouseY = e.touches[0].pageY - canvas.offsetTop - canvas.height/2;
+});
+
+$(document).on('touchmove', function(e){
+  mouseX = e.touches[0].pageX - canvas.offsetLeft - canvas.width/2;
+  mouseY = e.touches[0].pageY - canvas.offsetTop - canvas.height/2;
+});
+
+$(document).on('touchend', function(e){
+  mouseDown = false;
+  mouseX = null;
+  mouseY = null;
+});
+
+// $(document).touchstart(function(e){
+
+// });
 
 // TODO don't emit right in this function...?
 // returns true if a collision occurred
@@ -278,7 +298,7 @@ function update() {
     paddle.angularVelocity = Math.min(paddle.maxAngularVelocity, paddle.angularVelocity + paddle.angularAcceleration);
   } else if (rightPressed && !leftPressed) {
     paddle.angularVelocity = Math.max(-paddle.maxAngularVelocity, paddle.angularVelocity - paddle.angularAcceleration);
-    
+
     // paddle.angle -= TWO_PI * paddle.speed;
 
   } else if (mouseX !== null && mouseY !== null) {
