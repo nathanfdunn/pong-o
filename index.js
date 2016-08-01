@@ -5,11 +5,14 @@ var io = require('socket.io')(http);
 // TODO remove?
 var clients = {};
 var allPaddles = {};
-// var ball;
+var balls = {};
 
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
 });
+
+setInterval(function(){console.log('cur paddles\n', allPaddles, '\n');}, 10000);
+
 
 io.on('connection', function(socket){
   console.log('A new player connected, id: '+socket.id);
@@ -18,12 +21,37 @@ io.on('connection', function(socket){
 
   clients[socket.id] = socket;
   
+  var newBall = {
+    owner: socket.id,
+    x: 0,
+    y: 0,
+    radius: 20,
+    color: 'red',
+    outlineColor: 'black',
+    vAngle: 10,
+    vMagnitude: 0.03
+  };
+
+  newBall.snapshot = {
+    owner: socket.id,
+    x: newBall.x,
+    y: newBall.y,
+    time: (new Date()).getTime(),
+    vAngle: newBall.vAngle,
+    vMagnitude: newBall.vMagnitude    
+  };
+
+  balls[socket.id] = newBall;
+
+  console.log('broadcasting new ball: ', newBall);
+  socket.broadcast.emit('new-ball', newBall);
+
   socket.emit('initialized', {
     yourId: socket.id,
-    otherPaddles: allPaddles
+    otherPaddles: allPaddles,
+    balls: balls
   });
 
-  setInterval(function(){console.log('cur paddles\n', allPaddles, '\n');}, 1000);
 
   // ??
   // io.emit('player-connected', socket.id);
@@ -37,6 +65,7 @@ io.on('connection', function(socket){
   });
 
   socket.on('ball-update', function(ballInfo) {
+    console.log('received and reemitting ball update: ', ballInfo);
     socket.broadcast.emit('ball-update', ballInfo);
   });
 

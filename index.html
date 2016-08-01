@@ -29,6 +29,8 @@ var lastUpdateTime = (new Date()).getTime();
 // maps player ids to their paddle objects
 var others = {};
 
+var balls;
+
 var socket = io();
 
 var DELAY = 30;         // milliseconds to wait
@@ -42,6 +44,7 @@ socket.on('initialized', function(initInfo){
   myId = initInfo.yourId;
   hasBeenInitialized = true;
   others = initInfo.otherPaddles;
+  balls = initInfo.balls;
   publishPaddleUpdate();
 });
 
@@ -53,13 +56,20 @@ socket.on('player-disconnected', function(playerId) {
   }
 });
 
+socket.on('new-ball', function(newBall){
+  console.log('received new ball: ', newBall);
+  balls[newBall.owner] = newBall;
+});
+
 socket.on('paddle-update', function(paddleInfo) {
-  console.log('Received paddle update: ', paddleInfo);
+  // console.log('Received paddle update: ', paddleInfo);
   others[paddleInfo.playerId] = paddleInfo.paddle;
 });
 
 socket.on('ball-update', function(ballSnapshot) {
-  ball.snapshot = ballSnapshot;
+  console.log('received ball update: ', ballSnapshot);
+  balls[ballSnapshot.owner].snapshot = ballSnapshot;
+  // ball.snapshot = ballSnapshot;
 });
 
 function publishPaddleUpdate () {
@@ -76,18 +86,20 @@ var W = 300, H = 300;
 
 var TWO_PI = 2 * Math.PI;
 
-var ball = {
-  x: 0,
-  y: 0,
-  radius: 20,
-  color: 'red',
-  outlineColor: 'black',
-  vAngle: 10,
-  vMagnitude: 0.03
-};
 
-function takeBallSnapshot() {
+// var ball = {
+//   x: 0,
+//   y: 0,
+//   radius: 20,
+//   color: 'red',
+//   outlineColor: 'black',
+//   vAngle: 10,
+//   vMagnitude: 0.03
+// };
+
+function takeBallSnapshot(ball) {
   return {
+    owner: ball.owner,
     x: ball.x,
     y: ball.y,
     time: (new Date()).getTime(),
@@ -96,7 +108,7 @@ function takeBallSnapshot() {
   };
 }
 
-ball.snapshot = takeBallSnapshot();
+// ball.snapshot = takeBallSnapshot();
 
 
 var paddle = {
@@ -168,8 +180,10 @@ function redraw() {
   for (var id in others){
     drawCircle(others[id]);
   }
-
-  drawCircle(ball);
+  for (var id in balls){
+    drawCircle(balls[id]);
+  }
+  // drawCircle(ball);
   drawCircle(paddle);
 }
 
@@ -242,7 +256,7 @@ $(document).on('touchend', function(e){
 
 // TODO don't emit right in this function...?
 // returns true if a collision occurred
-function detectAndResolveCollision(){
+function detectAndResolveCollision(ball){
   var diffX = paddle.x - ball.x;
   var diffY = paddle.y - ball.y;
 
@@ -276,7 +290,7 @@ function detectAndResolveCollision(){
 function update() {
   // delete others[undefined];   //hack - not sure why it's appearing
   for (var id in others){
-    console.log(id, others[id]);
+    // console.log(id, others[id]);
     // console.log(others[id]);
   }
   var curTime = (new Date()).getTime();
@@ -284,13 +298,16 @@ function update() {
   lastUpdateTime = curTime;
 
   // Elapsed milliseconds
-  var dt = (new Date()).getTime() - ball.snapshot.time;
 
-  ball.x = ball.snapshot.x + ball.snapshot.vMagnitude * Math.cos(ball.snapshot.vAngle) * dt;
-  ball.y = ball.snapshot.y + ball.snapshot.vMagnitude * Math.sin(ball.snapshot.vAngle) * dt;
+  for (var id in balls) {
+    var ball = balls[id];
+    var dt = (new Date()).getTime() - ball.snapshot.time;
+
+    ball.x = ball.snapshot.x + ball.snapshot.vMagnitude * Math.cos(ball.snapshot.vAngle) * dt;
+    ball.y = ball.snapshot.y + ball.snapshot.vMagnitude * Math.sin(ball.snapshot.vAngle) * dt;
+  }
 
   paddle.angle += paddle.angularVelocity * paddleDt;
-
 
   // var 
 
@@ -321,10 +338,19 @@ function update() {
   }
   publishPaddleUpdate();
 
-  var collision = detectAndResolveCollision();
-  if (collision){
-    ball.snapshot = takeBallSnapshot();
-    socket.emit('ball-update', ball.snapshot);
+  // var collision = detectAndResolveCollision();
+  // if (collision){
+  //   ball.snapshot = takeBallSnapshot();
+  //   socket.emit('ball-update', ball.snapshot);
+  // }
+  for (var id in balls){
+    var ball = balls[id];
+    var collision = detectAndResolveCollision(ball);
+    if (collision){
+      ball.snapshot = takeBallSnapshot(ball);
+      console.log('emitting ball update: ', ball.snapshot);
+      socket.emit('ball-update', ball.snapshot);
+    }
   }
 }
 
