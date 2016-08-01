@@ -143,10 +143,13 @@ function predictBallOutOfBounds (ballId) {
 
   var ballSnapshot = balls[ballId].snapshot;
 
+  // effective radius
+  var r = constants.outOfBoundsRadius + balls[ballId].radius
+
   // Solve x(t)^2 + y(t)^2 = r^2
   var a = ballSnapshot.vMagnitude*ballSnapshot.vMagnitude;
   var b = 2*ballSnapshot.vMagnitude*(ballSnapshot.x*Math.cos(ballSnapshot.vAngle) + ballSnapshot.y*Math.sin(ballSnapshot.vAngle));
-  var c = ballSnapshot.x*ballSnapshot.x + ballSnapshot.y*ballSnapshot.y - constants.outOfBoundsRadius*constants.outOfBoundsRadius;
+  var c = ballSnapshot.x*ballSnapshot.x + ballSnapshot.y*ballSnapshot.y - r*r;
 
   var determinant = b*b - 4*a*c;
   // console.log('det', determinant);

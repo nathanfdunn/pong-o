@@ -289,6 +289,7 @@ function detectAndResolveCollision(ball){
       var surfaceAngle = Math.PI/2 + Math.atan2(diffY, diffX);
       var returnAngle = 2*surfaceAngle - ball.vAngle;
       ball.vAngle = returnAngle;
+      ball.vMagnitude *= 1.05;    // 5% increase in velocity
     }
     return true;
   }
@@ -314,6 +315,8 @@ function update() {
 
     ball.x = ball.snapshot.x + ball.snapshot.vMagnitude * Math.cos(ball.snapshot.vAngle) * dt;
     ball.y = ball.snapshot.y + ball.snapshot.vMagnitude * Math.sin(ball.snapshot.vAngle) * dt;
+    ball.vAngle = ball.snapshot.vAngle;
+    ball.vMagnitude = ball.snapshot.vMagnitude;
   }
 
   paddle.angle += paddle.angularVelocity * paddleDt;
