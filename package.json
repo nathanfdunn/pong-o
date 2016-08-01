@@ -4,18 +4,7 @@
   "description": "A coop, multiplayer pong game",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "watch-start": "nodemon . & browser-sync start --server --file \"*.html, *.css\"",
-    "watch-start": "nodemon .",
-    "watch-sync": "browser-sync start --server --files \"*.html, *.css\"",
-    "watch": "browser-sync start -p localhost:3000 --port 3001 -f -f server.log & nodemon .",
-    "watch-bs": "browser-sync start -p localhost:3000 --port 3001 -f -f server.log",
-    "start": "node .",
-
-
-    "watch-start-2": "nodemon . & npm run watch-sync"
-
-    
+    "start": "nodemon ."
   },
   "author": "",
   "license": "ISC",

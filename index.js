@@ -5,6 +5,7 @@ var io = require('socket.io')(http);
 // TODO remove?
 var clients = {};
 var allPaddles = {};
+// var ball;
 
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
@@ -51,6 +52,79 @@ io.on('connection', function(socket){
     socket.broadcast.emit('paddle-update', paddleInfo);
   });
 });
+
+
+function setOutOfBoundsTimeout(time, ballId){
+
+  clearTimeout(outOfBoundsTimeouts[ballId]);
+  outOfBoundsTimeouts[ballId] = setTimeout(function(){
+    // console.log('players: ', players);
+
+    console.log('setting timeout for id:', ballId);
+    // showBalls();
+    // // protect from race conditions
+    // if (!players[ballId] || !players[ballId].ball){
+    //   return;
+    // }
+    var ball = players[ballId].ball;
+    // var ball = balls[ballId];
+
+    // if (ball === undefined){return;}
+    ball.x = 0;
+    ball.y = 0;
+    ball.vAngle = Math.random()*2*Math.PI;
+    ball.vMagnitude = 0.03;
+    ball.time = (new Date()).getTime();
+// return {
+//   owner: ball.owner,
+//   x: ball.x,
+//   y: ball.y,
+//   time: (new Date()).getTime(),
+//   vAngle: ball.vAngle,
+//   vMagnitude: ball.vMagnitude
+// };
+    ball.snapshot = {
+      owner: ball.owner,
+      x: ball.x,
+      y: ball.y,
+      time: (new Date()).getTime(),
+      vAngle: ball.vAngle,
+      vMagnitude: ball.vMagnitude
+    };
+    console.log('ball is out of bounds');
+    io.emit('ball-update', ball.snapshot);
+    predictBallOutOfBounds(ball.owner);
+    // emitBallUpdate(ball.snapshot);
+  }, time);
+}
+
+function predictBallOutOfBounds () {
+  console.log('predicting: ', ballId);
+
+  var ballSnapshot = players[ballId].ball.snapshot;
+
+  // Solve x(t)^2 + y(t)^2 = r^2
+  var a = ballSnapshot.vMagnitude*ballSnapshot.vMagnitude;
+  var b = 2*ballSnapshot.vMagnitude*(ballSnapshot.x*Math.cos(ballSnapshot.vAngle) + ballSnapshot.y*Math.sin(ballSnapshot.vAngle));
+  var c = ballSnapshot.x*ballSnapshot.x + ballSnapshot.y*ballSnapshot.y - constants.outOfBoundsRadius*constants.outOfBoundsRadius;
+
+  var determinant = b*b - 4*a*c;
+  // console.log('det', determinant);
+  if (determinant < 0){
+    setOutOfBoundsTimeout(0, ballId);     // ball already out of bounds
+  } else {
+    var t = (-b + Math.sqrt(determinant))/(2*a);
+    // account for time discrepency
+    var discrepency = (new Date()).getTime() - ballSnapshot.time;
+    console.log('discrepency:', discrepency);
+
+    t -= discrepency;
+    setOutOfBoundsTimeout(t, ballId);
+    console.log('prediction oob in: ', t);
+  }
+}
+// function setOutOfBoundsTimeout(time, ballId){
+
 
 
 
