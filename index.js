@@ -67,6 +67,8 @@ io.on('connection', function(socket){
     console.log('A player has disconnected, id: ', socket.id);
     delete clients[socket.id];
     delete allPaddles[socket.id];
+    delete balls[socket.id];
+    clearTimeout(outOfBoundsTimeouts[socket.id]);
     socket.broadcast.emit('player-disconnected', socket.id);
   });
 

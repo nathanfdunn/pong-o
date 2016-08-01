@@ -52,6 +52,7 @@ socket.on('initialized', function(initInfo){
 socket.on('player-disconnected', function(playerId) {
   console.log('socket '+myId+' sees player left: '+playerId);
   delete others[playerId];
+  delete balls[playerId];
   for (var id in others){
     console.log('id: ', id, 'obj: ', others[id]);
   }
