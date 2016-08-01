@@ -23,6 +23,7 @@ function getRandomColor () {
   return out;
 }
 
+var outOfBoundsRadius = 150;
 
 var lastUpdateTime = (new Date()).getTime();
 
@@ -168,6 +169,13 @@ function redraw() {
   ctx.strokeRect(0, 0, canvas.width, canvas.height);
   ctx.closePath();
 
+
+  drawCircle({
+    x: 0,
+    y: 0,
+    color: 'white',
+    radius: outOfBoundsRadius
+  });
   // if (mouseX !== null){
   //   console.log('drawing circle at mouse coords');
   //   drawCircle({

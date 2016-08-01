@@ -7,6 +7,10 @@ var clients = {};
 var allPaddles = {};
 var balls = {};
 
+var constants = {
+  outOfBoundsRadius: 150
+};
+
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
 });
@@ -43,6 +47,8 @@ io.on('connection', function(socket){
 
   balls[socket.id] = newBall;
 
+  predictBallOutOfBounds(newBall.owner);
+
   console.log('broadcasting new ball: ', newBall);
   socket.broadcast.emit('new-ball', newBall);
 
@@ -66,6 +72,8 @@ io.on('connection', function(socket){
 
   socket.on('ball-update', function(ballInfo) {
     console.log('received and reemitting ball update: ', ballInfo);
+    balls[ballInfo.owner].snapshot = ballInfo;
+    predictBallOutOfBounds(ballInfo.owner);
     socket.broadcast.emit('ball-update', ballInfo);
   });
 
@@ -82,6 +90,7 @@ io.on('connection', function(socket){
   });
 });
 
+var outOfBoundsTimeouts = {};
 
 function setOutOfBoundsTimeout(time, ballId){
 
@@ -89,13 +98,13 @@ function setOutOfBoundsTimeout(time, ballId){
   outOfBoundsTimeouts[ballId] = setTimeout(function(){
     // console.log('players: ', players);
 
-    console.log('setting timeout for id:', ballId);
+    // console.log('setting timeout for id:', ballId);
     // showBalls();
     // // protect from race conditions
     // if (!players[ballId] || !players[ballId].ball){
     //   return;
     // }
-    var ball = players[ballId].ball;
+    var ball = balls[ballId];
     // var ball = balls[ballId];
 
     // if (ball === undefined){return;}
@@ -103,7 +112,7 @@ function setOutOfBoundsTimeout(time, ballId){
     ball.y = 0;
     ball.vAngle = Math.random()*2*Math.PI;
     ball.vMagnitude = 0.03;
-    ball.time = (new Date()).getTime();
+    // ball.time = (new Date()).getTime();
 // return {
 //   owner: ball.owner,
 //   x: ball.x,
@@ -127,10 +136,10 @@ function setOutOfBoundsTimeout(time, ballId){
   }, time);
 }
 
-function predictBallOutOfBounds () {
-  console.log('predicting: ', ballId);
+function predictBallOutOfBounds (ballId) {
+  console.log('predicting ball oob: ', ballId);
 
-  var ballSnapshot = players[ballId].ball.snapshot;
+  var ballSnapshot = balls[ballId].snapshot;
 
   // Solve x(t)^2 + y(t)^2 = r^2
   var a = ballSnapshot.vMagnitude*ballSnapshot.vMagnitude;
