@@ -370,6 +370,7 @@ function detectAndResolveCollision(ball){
 function updateScoreDisplay () {
   var dt = (new Date()).getTime() - lastScoringSnapshot.time;
   var curScore = lastScoringSnapshot.score + lastScoringSnapshot.multiplier * dt / 1000;
+  curScore = Math.max(0, curScore);
   $('#score').text('Score: '+Math.floor(curScore));
   $('#multiplier').text('Multiplier: x'+lastScoringSnapshot.multiplier);
 }
