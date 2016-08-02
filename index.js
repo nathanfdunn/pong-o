@@ -16,11 +16,31 @@ function getRandomColorPair () {
   return colorPairsPicker(base, {contrast: 3});
 }
 
-// var scoringSnapshot = {
-//   score: 0,
-//   multiplier: 0,
-//   time: (new Date()).getTime()
-// };
+var scoringSnapshot = {
+  score: 0,       // one point per second per multiplier
+  multiplier: 0,
+  time: (new Date()).getTime()
+};
+
+//
+function updateScore(multOffset, reset){
+  var newTime = (new Date()).getTime();
+  var dt = newTime - scoringSnapshot.time;
+  var newScoringSnapshot = {
+    score: scoringSnapshot.score + scoringSnapshot.multiplier * dt / 1000,
+    multiplier: Object.keys(clients).length + multOffset,
+    time: newTime
+  };
+  if (newScoringSnapshot.multiplier === 0){
+    newScoringSnapshot.score = 0;
+  }
+  if (reset){
+    newScoringSnapshot.score = 0;
+  }
+  scoringSnapshot = newScoringSnapshot;
+  console.log('updating score: ', newScoringSnapshot);
+  io.emit('score-update', newScoringSnapshot);
+}
 
 // TODO remove?
 var clients = {};
@@ -43,7 +63,7 @@ var initBallVel = 0.07;
 
 io.on('connection', function(socket){
   console.log('A new player connected, id: '+socket.id);
-  
+  updateScore(1);
   // for (var id in so)
   var colorPair = getRandomColorPair();
 
@@ -92,6 +112,7 @@ io.on('connection', function(socket){
   socket.broadcast.emit('player-connected', socket.id);
 
   socket.on('disconnect', function(){
+    updateScore(-1);
     console.log('A player has disconnected, id: ', socket.id);
     delete clients[socket.id];
     delete allPaddles[socket.id];
@@ -162,6 +183,7 @@ function setOutOfBoundsTimeout(time, ballId){
     console.log('ball is out of bounds');
     io.emit('ball-update', ball.snapshot);
     predictBallOutOfBounds(ball.owner);
+    updateScore(0, true);
     // emitBallUpdate(ball.snapshot);
   }, time);
 }
