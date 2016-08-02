@@ -414,12 +414,16 @@ function update() {
   } else if (mouseX !== null && mouseY !== null) {
     var desiredAngle = Math.atan2(mouseY, mouseX);
     var sinDelta = Math.sin(desiredAngle - paddle.angle);
-    if (sinDelta < 0) {
-      paddle.angularVelocity = Math.max(-paddle.maxAngularVelocity, paddle.angularVelocity - paddle.angularAcceleration);
-    } else if (sinDelta > 0) {
-      paddle.angularVelocity = Math.min(paddle.maxAngularVelocity, paddle.angularVelocity + paddle.angularAcceleration);
+    paddle.angularVelocity = 0;
 
-    }
+    paddle.angle += sinDelta/3;
+    // if (sinDelta < 0) {
+    //   // paddle.angularVelocity = Math.max(-paddle.maxAngularVelocity, paddle.angularVelocity - paddle.angularAcceleration);
+    //   // paddle.angle += sinDelta;
+    // } else if (sinDelta > 0) {
+    //   // paddle.angularVelocity = Math.min(paddle.maxAngularVelocity, paddle.angularVelocity + paddle.angularAcceleration);
+
+    // }
 
   } else {      // slow down
     if (paddle.angularVelocity > 0){
