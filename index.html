@@ -151,15 +151,16 @@ var ctx = canvas.getContext('2d');
 
 var DIM;
 
-$(window).resize(function(){
-  // console.log('width: ', $(window).width());
-  // console.log('height: ', $(window).height());
+function resizeCanvas(){
   DIM = Math.min($(window).width(), $(window).height());
   canvas.width = DIM;
   canvas.height = DIM;
-})
+}
 
-// Just to initialize...I guess
+$(window).resize(resizeCanvas);
+$(document).ready(resizeCanvas);
+
+// // Just to initialize...I guess
 canvas.width = W;
 canvas.height = H;
 
