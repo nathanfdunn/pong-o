@@ -119,7 +119,7 @@ function takeBallSnapshot(ball) {
 
 var paddle = {
   angle: 0,
-  trackRadius: 100,
+  trackRadius: 115,
   get x () {
     return this.trackRadius * Math.cos(this.angle);
   },
@@ -129,7 +129,7 @@ var paddle = {
   angularVelocity: 0,       // radians per second
   angularAcceleration: 0.001,  // radians per second ^ 2
   maxAngularVelocity: 0.01,   // radians Per 
-  radius: 50,
+  radius: 35,
   color: null, //getRandomColor(),
   outlineColor: null, // getRandomColor(),
   // speed: 0.03         // How fast it moves around the track
@@ -152,7 +152,7 @@ var ctx = canvas.getContext('2d');
 var DIM;
 
 function resizeCanvas(){
-  DIM = Math.min($(window).width(), $(window).height());
+  DIM = Math.min($(window).width(), $(window).height()) - 50;
   canvas.width = DIM;
   canvas.height = DIM;
 }

@@ -2,6 +2,9 @@ var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 
+io.set('heartbeat timeout', 3000);
+io.set('heartbeat interval', 1000);
+
 var colorPairsPicker = require('color-pairs-picker');
 
 
@@ -29,6 +32,7 @@ app.get('/', function(req, res){
 
 setInterval(function(){console.log('cur paddles\n', allPaddles, '\n');}, 10000);
 
+var initBallVel = 0.07;
 
 io.on('connection', function(socket){
   console.log('A new player connected, id: '+socket.id);
@@ -38,6 +42,7 @@ io.on('connection', function(socket){
 
   clients[socket.id] = socket;
   
+
   var newBall = {
     owner: socket.id,
     x: 0,
@@ -48,7 +53,8 @@ io.on('connection', function(socket){
     // color: 'red',
     // outlineColor: 'black',
     vAngle: 10,
-    vMagnitude: 0.03
+    // vMagnitude: 0.03
+    vMagnitude: initBallVel
   };
 
   newBall.snapshot = {
@@ -128,7 +134,7 @@ function setOutOfBoundsTimeout(time, ballId){
     ball.x = 0;
     ball.y = 0;
     ball.vAngle = Math.random()*2*Math.PI;
-    ball.vMagnitude = 0.03;
+    ball.vMagnitude = initBallVel;
     // ball.time = (new Date()).getTime();
 // return {
 //   owner: ball.owner,
