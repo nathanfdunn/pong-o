@@ -16,6 +16,11 @@ function getRandomColorPair () {
   return colorPairsPicker(base, {contrast: 3});
 }
 
+// var scoringSnapshot = {
+//   score: 0,
+//   multiplier: 0,
+//   time: (new Date()).getTime()
+// };
 
 // TODO remove?
 var clients = {};
@@ -33,6 +38,8 @@ app.get('/', function(req, res){
 setInterval(function(){console.log('cur paddles\n', allPaddles, '\n');}, 10000);
 
 var initBallVel = 0.07;
+
+
 
 io.on('connection', function(socket){
   console.log('A new player connected, id: '+socket.id);

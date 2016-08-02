@@ -4,7 +4,29 @@
   <title></title>
 </head>
 <body>
+  <style type="text/css">
+    #score-group {
+      font-family: monoco;
+      /*text-align: center;*/
+      /*padding: 10px;*/
+      font-size: 5vmin;
+    }
+    #score {
+      /*padding: 10px;*/
+      padding-top: 10px;
+      padding-left: 10px;
+    }
+    #multiplier {
+      padding-top: 10px;
+      padding-left: 10px;
+      /*padding: 10px;*/
+    }
+  </style>
   <canvas id="canvas" style=""></canvas>
+  <div id="score-group">
+    <div id="score">Score: 83,372</div>
+    <div id="multiplier">Multiplier: x4</div>
+  </div>
 </body>
 <!-- Jquery... -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
@@ -22,6 +44,13 @@
 //   }
 //   return out;
 // }
+
+var lastScoringSnapshot;
+
+//  = {
+//   score: 0,
+//   multiplier: 1
+// };
 
 var outOfBoundsRadius = 150;
 
@@ -152,7 +181,7 @@ var ctx = canvas.getContext('2d');
 var DIM;
 
 function resizeCanvas(){
-  DIM = Math.min($(window).width(), $(window).height()) - 50;
+  DIM = Math.min($(window).width() - 20, $(window).height() - 130);
   canvas.width = DIM;
   canvas.height = DIM;
 }
@@ -232,6 +261,8 @@ var rightPressed = false;
 var mouseDown = false;
 var mouseX = null;
 var mouseY = null;
+
+
 
 // TODO chain?
 $(document).keydown(function(e){
