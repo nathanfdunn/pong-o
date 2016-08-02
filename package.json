@@ -4,7 +4,8 @@
   "description": "A coop, multiplayer pong game",
   "main": "index.js",
   "scripts": {
-    "start": "node ."
+    "start": "node .",
+    "watch": "nodemon ."
   },
   "author": "",
   "license": "ISC",
