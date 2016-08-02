@@ -87,6 +87,7 @@ function publishPaddleUpdate () {
   socket.emit('paddle-update', updateInfo);
 }
 
+// Normalized coordinates....yeah, very bad way to do it
 var W = 300, H = 300;
 
 var TWO_PI = 2 * Math.PI;
@@ -148,14 +149,32 @@ function takePaddleSnapshot(){
 var canvas = document.getElementById('canvas');
 var ctx = canvas.getContext('2d');
 
+var DIM;
+
+$(window).resize(function(){
+  // console.log('width: ', $(window).width());
+  // console.log('height: ', $(window).height());
+  DIM = Math.min($(window).width(), $(window).height());
+  canvas.width = DIM;
+  canvas.height = DIM;
+})
+
+// Just to initialize...I guess
 canvas.width = W;
 canvas.height = H;
 
 function drawCircle(circle){
   ctx.fillStyle = circle.color || 'black';
 
+  // var x = circle.x;// + W/2;
+  // var y = circle.y;// + H/2;
+  // var r = circle.radius;
+  var x = circle.x * DIM / W + DIM/2;
+  var y = circle.y * DIM / W + DIM/2;
+  var r = circle.radius * DIM / W;
+
   ctx.beginPath()
-  ctx.arc(circle.x + canvas.width/2, circle.y + canvas.height/2, circle.radius, 0, TWO_PI, false);
+  ctx.arc(x, y, r, 0, TWO_PI, false);
   ctx.fill();
   ctx.lineWidth = 5;
   ctx.strokeStyle = circle.outlineColor || 'black';
@@ -180,6 +199,14 @@ function redraw() {
     color: 'white',
     radius: outOfBoundsRadius
   });
+
+  // ctx.beginPath();
+  // // ctx.arc(DIM/2, DIM/2, outOfBoundsRadius * DIM / W, 0, TWO_PI, true);
+  // // ctx.rect(canvas.width, 0, -canvas.width, canvas.height);
+  // // ctx.rect(0, 0, canvas.width, canvas.height);
+  // ctx.fillStyle = 'black';
+  // ctx.fill();
+
   // if (mouseX !== null){
   //   console.log('drawing circle at mouse coords');
   //   drawCircle({
