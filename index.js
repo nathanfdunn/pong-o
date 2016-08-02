@@ -2,6 +2,18 @@ var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 
+var colorPairsPicker = require('color-pairs-picker');
+
+
+function getRandomColorPair () {
+  var base = '';
+  for (var i=0; i<6; i++){
+    base += '0123456789abcdef'[Math.floor(Math.random()*16)];
+  }
+  return colorPairsPicker(base, {contrast: 3});
+}
+
+
 // TODO remove?
 var clients = {};
 var allPaddles = {};
@@ -22,6 +34,7 @@ io.on('connection', function(socket){
   console.log('A new player connected, id: '+socket.id);
   
   // for (var id in so)
+  var colorPair = getRandomColorPair();
 
   clients[socket.id] = socket;
   
@@ -30,8 +43,10 @@ io.on('connection', function(socket){
     x: 0,
     y: 0,
     radius: 20,
-    color: 'red',
-    outlineColor: 'black',
+    color: colorPair.fg,
+    outlineColor: colorPair.bg,
+    // color: 'red',
+    // outlineColor: 'black',
     vAngle: 10,
     vMagnitude: 0.03
   };

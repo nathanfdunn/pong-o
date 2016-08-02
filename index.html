@@ -14,14 +14,14 @@
 
 (function(){
 
-// a hex string
-function getRandomColor () {
-  var out = '#';
-  for (var i=0; i<6; i++){
-    out += '0123456789abcdef'[Math.floor(Math.random()*16)];
-  }
-  return out;
-}
+// // a hex string
+// function getRandomColor () {
+//   var out = '#';
+//   for (var i=0; i<6; i++){
+//     out += '0123456789abcdef'[Math.floor(Math.random()*16)];
+//   }
+//   return out;
+// }
 
 var outOfBoundsRadius = 150;
 
@@ -46,6 +46,9 @@ socket.on('initialized', function(initInfo){
   hasBeenInitialized = true;
   others = initInfo.otherPaddles;
   balls = initInfo.balls;
+  var myBall = balls[myId];
+  paddle.color = myBall.outlineColor;
+  paddle.outlineColor = myBall.color;
   publishPaddleUpdate();
 });
 
@@ -126,8 +129,8 @@ var paddle = {
   angularAcceleration: 0.001,  // radians per second ^ 2
   maxAngularVelocity: 0.01,   // radians Per 
   radius: 50,
-  color: getRandomColor(),
-  outlineColor: getRandomColor(),
+  color: null, //getRandomColor(),
+  outlineColor: null, // getRandomColor(),
   // speed: 0.03         // How fast it moves around the track
 };
 
