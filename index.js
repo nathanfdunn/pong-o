@@ -7,7 +7,6 @@ io.set('heartbeat interval', 1000);
 
 var colorPairsPicker = require('color-pairs-picker');
 
-
 function getRandomColorPair () {
   var base = '';
   for (var i=0; i<6; i++){
@@ -17,12 +16,11 @@ function getRandomColorPair () {
 }
 
 var scoringSnapshot = {
-  score: 0,       // one point per second per multiplier
+  score: 0,
   multiplier: 0,
   time: (new Date()).getTime()
 };
 
-//
 function updateScore(multOffset, reset){
   var newTime = (new Date()).getTime();
   var dt = newTime - scoringSnapshot.time;
@@ -42,7 +40,6 @@ function updateScore(multOffset, reset){
   io.emit('score-update', newScoringSnapshot);
 }
 
-// TODO remove?
 var clients = {};
 var allPaddles = {};
 var balls = {};
@@ -59,16 +56,12 @@ setInterval(function(){console.log('cur paddles\n', allPaddles, '\n');}, 10000);
 
 var initBallVel = 0.07;
 
-
-
 io.on('connection', function(socket){
   console.log('A new player connected, id: '+socket.id);
   updateScore(1);
-  // for (var id in so)
   var colorPair = getRandomColorPair();
 
   clients[socket.id] = socket;
-  
 
   var newBall = {
     owner: socket.id,
@@ -77,10 +70,7 @@ io.on('connection', function(socket){
     radius: 20,
     color: colorPair.fg,
     outlineColor: colorPair.bg,
-    // color: 'red',
-    // outlineColor: 'black',
     vAngle: 10,
-    // vMagnitude: 0.03
     vMagnitude: initBallVel
   };
 
@@ -106,9 +96,6 @@ io.on('connection', function(socket){
     balls: balls
   });
 
-
-  // ??
-  // io.emit('player-connected', socket.id);
   socket.broadcast.emit('player-connected', socket.id);
 
   socket.on('disconnect', function(){
@@ -128,13 +115,6 @@ io.on('connection', function(socket){
     socket.broadcast.emit('ball-update', ballInfo);
   });
 
-  // paddleInfo expected to be of the form
-  /*
-  {
-    paddleId: someInt (socketid)
-    paddleInfo: somePaddleInformation
-  }
-  */
   socket.on('paddle-update', function(paddleInfo) {
     allPaddles[paddleInfo.playerId] = paddleInfo.paddle;
     socket.broadcast.emit('paddle-update', paddleInfo);
@@ -147,31 +127,14 @@ function setOutOfBoundsTimeout(time, ballId){
 
   clearTimeout(outOfBoundsTimeouts[ballId]);
   outOfBoundsTimeouts[ballId] = setTimeout(function(){
-    // console.log('players: ', players);
 
-    // console.log('setting timeout for id:', ballId);
-    // showBalls();
-    // // protect from race conditions
-    // if (!players[ballId] || !players[ballId].ball){
-    //   return;
-    // }
     var ball = balls[ballId];
-    // var ball = balls[ballId];
 
-    // if (ball === undefined){return;}
     ball.x = 0;
     ball.y = 0;
     ball.vAngle = Math.random()*2*Math.PI;
     ball.vMagnitude = initBallVel;
-    // ball.time = (new Date()).getTime();
-// return {
-//   owner: ball.owner,
-//   x: ball.x,
-//   y: ball.y,
-//   time: (new Date()).getTime(),
-//   vAngle: ball.vAngle,
-//   vMagnitude: ball.vMagnitude
-// };
+
     ball.snapshot = {
       owner: ball.owner,
       x: ball.x,
@@ -184,7 +147,7 @@ function setOutOfBoundsTimeout(time, ballId){
     io.emit('ball-update', ball.snapshot);
     predictBallOutOfBounds(ball.owner);
     updateScore(0, true);
-    // emitBallUpdate(ball.snapshot);
+
   }, time);
 }
 
@@ -202,7 +165,7 @@ function predictBallOutOfBounds (ballId) {
   var c = ballSnapshot.x*ballSnapshot.x + ballSnapshot.y*ballSnapshot.y - r*r;
 
   var determinant = b*b - 4*a*c;
-  // console.log('det', determinant);
+
   if (determinant < 0){
     setOutOfBoundsTimeout(0, ballId);     // ball already out of bounds
   } else {
@@ -216,14 +179,7 @@ function predictBallOutOfBounds (ballId) {
     console.log('prediction oob in: ', t);
   }
 }
-// function setOutOfBoundsTimeout(time, ballId){
 
-
-
-
-// function publishBallUpdate(){
-
-// }
 var port = process.env.PORT || 3000;
 http.listen(port, function(){
   console.log('listening on *:', port);

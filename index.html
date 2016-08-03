@@ -6,20 +6,16 @@
 <body>
   <style type="text/css">
     #score-group {
-      font-family: monoco;
-      /*text-align: center;*/
-      /*padding: 10px;*/
+      font-family: Courier;
       font-size: 5vmin;
     }
     #score {
-      /*padding: 10px;*/
       padding-top: 10px;
       padding-left: 10px;
     }
     #multiplier {
       padding-top: 10px;
       padding-left: 10px;
-      /*padding: 10px;*/
     }
   </style>
   <canvas id="canvas" style=""></canvas>
@@ -28,7 +24,7 @@
     <div id="multiplier">Multiplier: x0</div>
   </div>
 </body>
-<!-- Jquery... -->
+
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -36,25 +32,11 @@
 
 (function(){
 
-// // a hex string
-// function getRandomColor () {
-//   var out = '#';
-//   for (var i=0; i<6; i++){
-//     out += '0123456789abcdef'[Math.floor(Math.random()*16)];
-//   }
-//   return out;
-// }
-
 var lastScoringSnapshot = {
   score: 0,
   multiplier: 0,
   time: 0
 };
-
-//  = {
-//   score: 0,
-//   multiplier: 1
-// };
 
 var outOfBoundsRadius = 150;
 
@@ -67,8 +49,7 @@ var balls;
 
 var socket = io();
 
-var DELAY = 30;         // milliseconds to wait
-// var FPS = 1000 / DELAY; // How many updates per second
+var DELAY = 30;         // milliseconds between updates
 
 var myId;
 
@@ -100,14 +81,12 @@ socket.on('new-ball', function(newBall){
 });
 
 socket.on('paddle-update', function(paddleInfo) {
-  // console.log('Received paddle update: ', paddleInfo);
   others[paddleInfo.playerId] = paddleInfo.paddle;
 });
 
 socket.on('ball-update', function(ballSnapshot) {
   console.log('received ball update: ', ballSnapshot);
   balls[ballSnapshot.owner].snapshot = ballSnapshot;
-  // ball.snapshot = ballSnapshot;
 });
 
 socket.on('score-update', function(newScoringSnapshot) {
@@ -118,28 +97,15 @@ socket.on('score-update', function(newScoringSnapshot) {
 function publishPaddleUpdate () {
 
   var updateInfo = {
-    playerId: myId, //socket.id,
+    playerId: myId,
     paddle: takePaddleSnapshot()
   };
-  // console.log('publishing paddle update: ', updateInfo);
   socket.emit('paddle-update', updateInfo);
 }
 
-// Normalized coordinates....yeah, very bad way to do it
 var W = 300, H = 300;
 
 var TWO_PI = 2 * Math.PI;
-
-
-// var ball = {
-//   x: 0,
-//   y: 0,
-//   radius: 20,
-//   color: 'red',
-//   outlineColor: 'black',
-//   vAngle: 10,
-//   vMagnitude: 0.03
-// };
 
 function takeBallSnapshot(ball) {
   return {
@@ -152,9 +118,6 @@ function takeBallSnapshot(ball) {
   };
 }
 
-// ball.snapshot = takeBallSnapshot();
-
-
 var paddle = {
   angle: 0,
   trackRadius: 115,
@@ -164,16 +127,14 @@ var paddle = {
   get y () {
     return this.trackRadius * Math.sin(this.angle);
   },
-  angularVelocity: 0,       // radians per second
-  angularAcceleration: 0.001,  // radians per second ^ 2
+  angularVelocity: 0,         // radians per second
+  angularAcceleration: 0.001, // radians per second ^ 2
   maxAngularVelocity: 0.01,   // radians Per 
   radius: 35,
-  color: null, //getRandomColor(),
-  outlineColor: null, // getRandomColor(),
-  // speed: 0.03         // How fast it moves around the track
+  color: null,
+  outlineColor: null
 };
 
-// For purely drawing purposes
 function takePaddleSnapshot(){
   return {
     x: paddle.x,
@@ -198,16 +159,12 @@ function resizeCanvas(){
 $(window).resize(resizeCanvas);
 $(document).ready(resizeCanvas);
 
-// // Just to initialize...I guess
 canvas.width = W;
 canvas.height = H;
 
 function drawCircle(circle){
   ctx.fillStyle = circle.color || 'black';
 
-  // var x = circle.x;// + W/2;
-  // var y = circle.y;// + H/2;
-  // var r = circle.radius;
   var x = circle.x * DIM / W + DIM/2;
   var y = circle.y * DIM / W + DIM/2;
   var r = circle.radius * DIM / W;
@@ -231,7 +188,6 @@ function redraw() {
   ctx.strokeRect(0, 0, canvas.width, canvas.height);
   ctx.closePath();
 
-
   drawCircle({
     x: 0,
     y: 0,
@@ -239,29 +195,12 @@ function redraw() {
     radius: outOfBoundsRadius
   });
 
-  // ctx.beginPath();
-  // // ctx.arc(DIM/2, DIM/2, outOfBoundsRadius * DIM / W, 0, TWO_PI, true);
-  // // ctx.rect(canvas.width, 0, -canvas.width, canvas.height);
-  // // ctx.rect(0, 0, canvas.width, canvas.height);
-  // ctx.fillStyle = 'black';
-  // ctx.fill();
-
-  // if (mouseX !== null){
-  //   console.log('drawing circle at mouse coords');
-  //   drawCircle({
-  //     x: mouseX,
-  //     y: mouseY,
-  //     radius: 5
-  //   });
-  // }
-
   for (var id in others){
     drawCircle(others[id]);
   }
   for (var id in balls){
     drawCircle(balls[id]);
   }
-  // drawCircle(ball);
   drawCircle(paddle);
 }
 
@@ -271,9 +210,6 @@ var mouseDown = false;
 var mouseX = null;
 var mouseY = null;
 
-
-
-// TODO chain?
 $(document).keydown(function(e){
   if (e.which === 37) {         // left arrow
     leftPressed = true;
@@ -330,11 +266,6 @@ $(document).on('touchend', function(e){
   mouseY = null;
 });
 
-// $(document).touchstart(function(e){
-
-// });
-
-// TODO don't emit right in this function...?
 // returns true if a collision occurred
 function detectAndResolveCollision(ball){
   var diffX = paddle.x - ball.x;
@@ -360,7 +291,7 @@ function detectAndResolveCollision(ball){
       var surfaceAngle = Math.PI/2 + Math.atan2(diffY, diffX);
       var returnAngle = 2*surfaceAngle - ball.vAngle;
       ball.vAngle = returnAngle;
-      ball.vMagnitude *= 1.05;    // 5% increase in velocity
+      ball.vMagnitude *= 1.05;
     }
     return true;
   }
@@ -378,18 +309,10 @@ function updateScoreDisplay () {
 //Simply calculates where the ball is needed
 function update() {
   updateScoreDisplay();
-  // delete others[undefined];   //hack - not sure why it's appearing
-  for (var id in others){
-    // console.log(id, others[id]);
-    // console.log(others[id]);
-  }
+  
   var curTime = (new Date()).getTime();
   var paddleDt = curTime - lastUpdateTime;
   lastUpdateTime = curTime;
-
-
-
-  // Elapsed milliseconds
 
   for (var id in balls) {
     var ball = balls[id];
@@ -403,44 +326,28 @@ function update() {
 
   paddle.angle += paddle.angularVelocity * paddleDt;
 
-  // var 
-
   if (leftPressed && !rightPressed){
     paddle.angularVelocity = Math.min(paddle.maxAngularVelocity, paddle.angularVelocity + paddle.angularAcceleration);
+
   } else if (rightPressed && !leftPressed) {
     paddle.angularVelocity = Math.max(-paddle.maxAngularVelocity, paddle.angularVelocity - paddle.angularAcceleration);
-
-    // paddle.angle -= TWO_PI * paddle.speed;
 
   } else if (mouseX !== null && mouseY !== null) {
     var desiredAngle = Math.atan2(mouseY, mouseX);
     var sinDelta = Math.sin(desiredAngle - paddle.angle);
     paddle.angularVelocity = 0;
-
     paddle.angle += sinDelta/3;
-    // if (sinDelta < 0) {
-    //   // paddle.angularVelocity = Math.max(-paddle.maxAngularVelocity, paddle.angularVelocity - paddle.angularAcceleration);
-    //   // paddle.angle += sinDelta;
-    // } else if (sinDelta > 0) {
-    //   // paddle.angularVelocity = Math.min(paddle.maxAngularVelocity, paddle.angularVelocity + paddle.angularAcceleration);
-
-    // }
 
   } else {      // slow down
     if (paddle.angularVelocity > 0){
       paddle.angularVelocity = Math.max(0, paddle.angularVelocity - paddle.angularAcceleration);
     } else if (paddle.angularVelocity < 0){
       paddle.angularVelocity = Math.min(0, paddle.angularVelocity + paddle.angularAcceleration);
-
     }
   }
+
   publishPaddleUpdate();
 
-  // var collision = detectAndResolveCollision();
-  // if (collision){
-  //   ball.snapshot = takeBallSnapshot();
-  //   socket.emit('ball-update', ball.snapshot);
-  // }
   for (var id in balls){
     var ball = balls[id];
     var collision = detectAndResolveCollision(ball);
@@ -458,7 +365,6 @@ setInterval(function(){
     redraw();
   }
 }, DELAY)
-
 
 })();
 
