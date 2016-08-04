@@ -1,7 +1,7 @@
 {
-  "name": "circle-pong",
+  "name": "pong-o",
   "version": "0.0.1",
-  "description": "A coop, multiplayer pong game",
+  "description": "A co-op, multiplayer pong game",
   "main": "index.js",
   "scripts": {
     "start": "node .",
