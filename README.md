@@ -5,6 +5,6 @@ Move your paddle around the outer circle using left and right arrow keys or clic
 
 Play with more people for a higher multiplier.
 
-Play it on [heroku](pong-o.herokuapp.com).
+Play it on [heroku](https://pong-o.herokuapp.com).
 
 ![Gameplay picture](pong-o.png)
